@@ -1,0 +1,5 @@
+azure-ai-contentsafety
+azure-ai-textanalytics
+azure-ai-language-conversations
+azure-ai-language-questionanswering
+python-dotenv
