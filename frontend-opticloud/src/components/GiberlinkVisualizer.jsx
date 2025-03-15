@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 
 const GiberlinkVisualizer = ({ messages }) => {
-  const [barHeights, setBarHeights] = useState([30, 50, 70, 50, 30, 20]);
+  const [barHeights, setBarHeights] = useState([30, 50, 70, 50, 30]);
 
   // Get the latest bot message
   const latestBotMessage = messages.length > 0 
@@ -20,12 +20,8 @@ const GiberlinkVisualizer = ({ messages }) => {
   }, []);
 
   return (
-    <div className="flex-1 overflow-y-auto pb-24 scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-gray-800 scrollbar-thumb-rounded-full scrollbar-track-rounded-full"
-      style={{
-        scrollbarWidth: 'thin',
-        scrollbarColor: '#4B5563 #1F2937'
-      }}>
-      <div className="max-w-3xl mx-auto p-4 h-full flex items-center justify-center">
+    <div className="h-full w-full bg-gray-900 border-l border-gray-700 md:animate-slide-in">
+      <div className="h-full flex items-center justify-center p-4">
         {latestBotMessage && (
           <div className="flex flex-col items-center space-y-8">
             {/* Sound interpretation text */}
@@ -34,11 +30,11 @@ const GiberlinkVisualizer = ({ messages }) => {
             </div>
 
             {/* Sound visualization bars */}
-            <div className="flex items-end justify-center gap-1 h-40 w-full max-w-md">
+            <div className="flex items-end justify-center gap-3 h-40 w-full max-w-md">
               {barHeights.map((height, i) => (
                 <div
                   key={i}
-                  className="w-8 bg-gradient-to-t from-blue-600 to-blue-400 rounded-t-lg transition-all duration-200 ease-in-out"
+                  className="w-10 bg-gradient-to-t from-blue-600 to-blue-400 rounded-t-lg transition-all duration-200 ease-in-out"
                   style={{ height: `${height}%` }}
                 />
               ))}
