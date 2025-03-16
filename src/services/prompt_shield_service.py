@@ -1,21 +1,44 @@
+import os
 import requests
-import json
-from src.config.azure_config import AZURE_ENDPOINT, AZURE_SUBSCRIPTION_KEY
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 class PromptShieldService:
     def __init__(self):
-        self.endpoint = f"{AZURE_ENDPOINT}/contentsafety/text:shieldPrompt?api-version=2024-09-01"
+        self.key = os.getenv("CONTENT_SAFETY_KEY")
+        self.endpoint = os.getenv("CONTENT_SAFETY_ENDPOINT")
+        if not self.key or not self.endpoint:
+            raise ValueError("Azure Content Safety credentials are missing.")
+        
+        # Construct the shield prompt endpoint
+        self.shield_endpoint = f"{self.endpoint}/contentsafety/text:shieldPrompt?api-version=2024-09-01"
         self.headers = {
-            "Ocp-Apim-Subscription-Key": AZURE_SUBSCRIPTION_KEY,
+            "Ocp-Apim-Subscription-Key": self.key,
             "Content-Type": "application/json"
         }
 
-    def shield_prompt(self, user_prompt: str, documents: list = []):
+    def shield_prompt(self, user_prompt: str, documents: list = None):
+        """Shield a prompt using Azure Content Safety API."""
+        if documents is None:
+            documents = []
+
+        payload = {
+            "userPrompt": user_prompt,
+            "documents": documents
+        }
+
         try:
-            payload = json.dumps({"userPrompt": user_prompt, "documents": documents})
-            response = requests.post(self.endpoint, headers=self.headers, data=payload)
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.RequestException as e:
-            print(f"Error in Prompt Shield: {e}")
-            return {"error": "Prompt Shield service failed"}
+            response = requests.post(
+                self.shield_endpoint,
+                json=payload,
+                headers=self.headers
+            )
+            
+            if response.status_code == 200:
+                return response.json()
+            else:
+                return {"error": f"Shield prompt failed: {response.text}"}
+        except Exception as e:
+            return {"error": f"Shield prompt service failed: {str(e)}"}
