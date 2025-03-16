@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from src.routes.content_safety_routes import router
+from src.routes.language_detection_routes import router
 
 app = FastAPI(title="Content Safety API", description="API to analyze text using Azure Content Safety", version="1.0")
 
