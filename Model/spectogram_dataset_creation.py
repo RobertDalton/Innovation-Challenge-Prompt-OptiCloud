@@ -17,7 +17,7 @@ from dotenv import load_dotenv
 
 load_dotenv() 
 
-def download_data_set(dataset:str,label:None):
+def download_data_set(dataset:str,label:None)->pd.DataFrame:
     
     dataset = load_dataset(dataset,label)
 
@@ -26,7 +26,7 @@ def download_data_set(dataset:str,label:None):
     return df
 
 
-def translate_text(client:TextTranslationClient,text:str):
+def translate_text(client:TextTranslationClient,text:str)->str:
 
     response = client.translate(body=text, to_language=['en'])
     translated_text = response[0].get('translations')[0].get('text')
@@ -34,7 +34,7 @@ def translate_text(client:TextTranslationClient,text:str):
     return  translated_text
 
 
-def get_content_safety_measures(client:ContentSafetyClient,toxic_text:str):
+def get_content_safety_measures(client:ContentSafetyClient,toxic_text:str)->int:
 
     request = AnalyzeTextOptions(text=toxic_text)
 
@@ -63,7 +63,7 @@ def get_content_safety_measures(client:ContentSafetyClient,toxic_text:str):
     return unsafety
 
 
-def transform_text_to_spectogram(text:str,path:str):
+def transform_text_to_spectogram(text:str,path:str)->None:
 
     channels = 1
     rate = 48000
@@ -89,11 +89,97 @@ def transform_text_to_spectogram(text:str,path:str):
 
 
     plt.figure(figsize=(20, 7))
-    plt.imshow(abs(coef), extent=[0, max_seconds, 0, f_max_detected], interpolation='bilinear', aspect='auto')
-    plt.yticks(np.arange(0, f_max_detected, 1500))
-    plt.xticks(np.arange(0, max_seconds, 10))
+    plt.imshow(abs(coef), extent=[0, max_seconds, 0, f_max_detected], interpolation='bilinear', aspect='auto',cmap='inferno')
+    plt.axis('off')
     plt.savefig(path, bbox_inches='tight')
     plt.close()
+
+def content_safety_retag(
+                           inputs:list,
+                           safety_client:ContentSafetyClient,
+                           translator_client:TextTranslationClient,
+                           text_analytics_client:TextAnalyticsClient,
+                           )->None:
+
+    '''
+    Content safety by itself didn't identify well some malicious intentions:
+
+    refer: to ms_tag_dataset_sample.csv
+    '''
+
+    content_safety_measures = []
+    full_english_text = []
+    for index,text in enumerate(inputs):
+        
+        print("\nProcessing_text\n")
+        language_detection= text_analytics_client.detect_language(documents = [text], country_hint = 'us')[0]
+        if language_detection.primary_language.name != 'English':
+            text = translate_text(translator_client,text) #Not all inputs are in English
+
+        print("Microsoft Validation")
+        measure = get_content_safety_measures(safety_client,text)
+        full_english_text.append(text)
+        content_safety_measures.append(measure)
+
+        print("Getting Spectogram")
+        if measure == 0:
+            path = f'C:\\Users\\seal6\\OneDrive\\Documentos\\Nueva Carpeta\\Safe_Spectograms\\safe_spectogram_{index}.png'
+            transform_text_to_spectogram(text,path)
+
+        else:
+            path = f'C:\\Users\\seal6\\OneDrive\\Documentos\\Nueva Carpeta\\Unsafe_Spectograms\\unsafe_spectogram_{index}.png'
+            transform_text_to_spectogram(text,path)
+
+    ms_tag_df = pd.DataFrame({
+        'input': full_english_text,
+        'toxicity': content_safety_measures
+    })
+
+    ms_tag_df.to_csv('ms_tag_dataset_sample.csv',index=0)
+
+
+def translate(text_analytics_client:TextAnalyticsClient,
+              translator_client:TextTranslationClient,
+              text:str)->str:
+    language_detection= text_analytics_client.detect_language(documents = [text])[0]
+    if language_detection.primary_language.name != 'English':
+        text = translate_text(translator_client,text)
+
+    return text
+
+def spectral_tagging(inputs:list,
+                    translator_client:TextTranslationClient,
+                    text_analytics_client:TextAnalyticsClient,
+                    path:str,
+                    key:str
+                    )->None:
+    
+    print(f"Processing {key} text to spectograms" )
+
+    full_text = []
+    safety = []
+    for index,text in enumerate(inputs):
+        text = translate(translator_client,text_analytics_client)
+
+        if key =="safe":
+            path = f'C:\\Users\\seal6\\OneDrive\\Documentos\\Nueva Carpeta\\Safe_Spectograms\\safe_spectogram_{index}.png'
+            safety.append(0)
+        else:
+            path = f'C:\\Users\\seal6\\OneDrive\\Documentos\\Nueva Carpeta\\Unsafe_Spectograms\\unsafe_spectogram_{index}.png'
+            safety.append(1)
+        full_text.append(text)
+        transform_text_to_spectogram(text,path)
+        
+        return  full_text,safety
+
+def build_dataframe(input_list,toxicity_list):
+
+    df = pd.DataFrame({
+        'input': input_list,
+        'toxicity': toxicity_list
+    })
+
+    return df
 
 
 safety_key = os.getenv("CONTENT_SAFETY_KEY")
@@ -119,37 +205,14 @@ safe_dataframe = full_dataframe[full_dataframe['toxicity']==0].copy()
 
 mini_toxic = toxic_dataframe['user_input'].sample(n=10,random_state=1)
 mini_safe = safe_dataframe['user_input'].sample(n=10,random_state=1)
-mini_sample = pd.concat([mini_toxic, mini_safe])
+#mini_sample = pd.concat([mini_toxic, mini_safe])
+#user_inputs = list(mini_sample)
 
-#Is better to tag again using microsoft content safety
-list_inputs = list(mini_sample)
+toxic, toxic_values = spectral_tagging(list(mini_toxic),translator_client,text_analytics_client,'toxic')
+safe, safe_values = spectral_tagging(list(mini_safe),translator_client,text_analytics_client,'safe')
 
-content_safety_measures = []
-full_english_text = []
-for index,text in enumerate(list_inputs):
-    
-    print("\nProcessing_text\n")
-    language_detection= text_analytics_client.detect_language(documents = [text], country_hint = 'us')[0]
-    if language_detection.primary_language.name != 'English':
-        text = translate_text(translator_client,text) #Not all inpiuts are in English
+full_toxicity = toxic_values + safe_values
+full_texts = toxic + safe
 
-    print("Microsoft Validation")
-    measure = get_content_safety_measures(safety_client,text)
-    full_english_text.append(text)
-    content_safety_measures.append(measure)
-
-    print("Getting Spectogram")
-    if measure == 0:
-        path = f'C:\\Users\\seal6\\OneDrive\\Documentos\\Nueva Carpeta\\Safe_Spectograms\\safe_spectogram_{index}.png'
-        transform_text_to_spectogram(text,path)
-
-    else:
-        path = f'C:\\Users\\seal6\\OneDrive\\Documentos\\Nueva Carpeta\\Unsafe_Spectograms\\unsafe_spectogram_{index}.png'
-        transform_text_to_spectogram(text,path)
-
-ms_tag_df = pd.DataFrame({
-    'input': full_english_text,
-    'toxicity': content_safety_measures
-})
-
-ms_tag_df.to_csv('ms_tag_dataset.csv',index=0)
+df = build_dataframe(full_texts,full_toxicity)
+df.to_csv('dataset_sample.csv',index=0)
