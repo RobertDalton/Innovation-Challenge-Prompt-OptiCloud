@@ -3,3 +3,5 @@ azure-ai-textanalytics
 azure-ai-language-conversations
 azure-ai-language-questionanswering
 python-dotenv
+fastapi==0.109.1
+uvicorn==0.27.0
