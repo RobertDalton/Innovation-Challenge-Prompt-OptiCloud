@@ -7,6 +7,7 @@ from azure.ai.contentsafety.models import TextCategory
 from azure.core.exceptions import HttpResponseError
 from azure.ai.contentsafety.models import AnalyzeTextOptions
 from azure.ai.translation.text import TextTranslationClient
+from azure.ai.textanalytics import TextAnalyticsClient
 import ggwave
 import matplotlib.pyplot as plt
 import numpy as np
@@ -25,7 +26,7 @@ def download_data_set(dataset:str,label:None):
     return df
 
 
-def translate_toxic_text(client:TextTranslationClient,text:str):
+def translate_text(client:TextTranslationClient,text:str):
 
     response = client.translate(body=text, to_language=['en'])
     translated_text = response[0].get('translations')[0].get('text')
@@ -91,7 +92,6 @@ def transform_text_to_spectogram(text:str,path:str):
     plt.imshow(abs(coef), extent=[0, max_seconds, 0, f_max_detected], interpolation='bilinear', aspect='auto')
     plt.yticks(np.arange(0, f_max_detected, 1500))
     plt.xticks(np.arange(0, max_seconds, 10))
-    plt.show()
     plt.savefig(path, bbox_inches='tight')
     plt.close()
 
@@ -101,8 +101,13 @@ safety_endpoint = os.getenv("CONTENT_SAFETY_ENDPOINT")
 
 translator_key = os.getenv("TRANSLATOR_KEY")
 
+multi_service_endpoint = os.getenv("MULTISERVICE_ENDPOINT")
+multi_service_key = os.getenv("MULTISERVICE_KEY")
+
+
 safety_client = ContentSafetyClient(safety_endpoint, AzureKeyCredential(safety_key))
 translator_client = TextTranslationClient( credential=AzureKeyCredential(translator_key),region='eastus')
+text_analytics_client = TextAnalyticsClient(endpoint=multi_service_endpoint, credential=AzureKeyCredential(multi_service_key))
 
 toxic_content = "lmsys/toxic-chat"
 label = 'toxicchat0124'
@@ -116,24 +121,31 @@ mini_toxic = toxic_dataframe['user_input'].sample(n=10,random_state=1)
 mini_safe = safe_dataframe['user_input'].sample(n=10,random_state=1)
 mini_sample = pd.concat([mini_toxic, mini_safe])
 
-#Is better to tag again ussing microsoft content safety
-list_inputs = list(mini_safe)
+#Is better to tag again using microsoft content safety
+list_inputs = list(mini_sample)
 
 content_safety_measures = []
 full_english_text = []
 for index,text in enumerate(list_inputs):
-    translated_text = translate_toxic_text(translator_client,text) #Not all inpiuts are in English
-    measure = get_content_safety_measures(safety_client,translated_text)
-    full_english_text.append(translated_text)
+    
+    print("\nProcessing_text\n")
+    language_detection= text_analytics_client.detect_language(documents = [text], country_hint = 'us')[0]
+    if language_detection.primary_language.name != 'English':
+        text = translate_text(translator_client,text) #Not all inpiuts are in English
+
+    print("Microsoft Validation")
+    measure = get_content_safety_measures(safety_client,text)
+    full_english_text.append(text)
     content_safety_measures.append(measure)
 
+    print("Getting Spectogram")
     if measure == 0:
-        path = f'C:\Users\seal6\OneDrive\Documentos\Nueva Carpeta\Unsafe_Spectograms\safe_spectogram_{index}'
-        transform_text_to_spectogram(translated_text,path)
+        path = f'C:\\Users\\seal6\\OneDrive\\Documentos\\Nueva Carpeta\\Safe_Spectograms\\safe_spectogram_{index}.png'
+        transform_text_to_spectogram(text,path)
 
     else:
-        path = f'C:\Users\seal6\OneDrive\Documentos\Nueva Carpeta\Safe_Spectograms\toxic_spectogram_{index}'
-        transform_text_to_spectogram(translated_text,path)
+        path = f'C:\\Users\\seal6\\OneDrive\\Documentos\\Nueva Carpeta\\Unsafe_Spectograms\\unsafe_spectogram_{index}.png'
+        transform_text_to_spectogram(text,path)
 
 ms_tag_df = pd.DataFrame({
     'input': full_english_text,
