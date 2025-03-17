@@ -1,6 +1,13 @@
-from datasets import load_dataset
-import pandas as pd
+
 import os
+import ggwave
+import pywt
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from datasets import load_dataset
+from dotenv import load_dotenv
 from azure.core.credentials import AzureKeyCredential
 from azure.ai.contentsafety import ContentSafetyClient
 from azure.ai.contentsafety.models import TextCategory
@@ -8,17 +15,18 @@ from azure.core.exceptions import HttpResponseError
 from azure.ai.contentsafety.models import AnalyzeTextOptions
 from azure.ai.translation.text import TextTranslationClient
 from azure.ai.textanalytics import TextAnalyticsClient
-import ggwave
-import matplotlib.pyplot as plt
-import numpy as np
-import pywt
-
-from dotenv import load_dotenv
 
 load_dotenv() 
 
 def download_data_set(dataset:str,label:None)->pd.DataFrame:
+    """
+    Get Data set from Hugging Face into dataframe
     
+    Parameters:
+        dataset: Dataset name from Hugging Face.
+        label: Optional laber for subset.
+    """
+
     dataset = load_dataset(dataset,label)
 
     df = dataset['train'].to_pandas()
@@ -27,48 +35,47 @@ def download_data_set(dataset:str,label:None)->pd.DataFrame:
 
 
 def translate_text(client:TextTranslationClient,text:str)->str:
+    """
+    Translate Text to English.
+    
+    Parameters:
+        client: TextTranslationClient.
+        text: String to transform.
+    """
 
-    response = client.translate(body=text, to_language=['en'])
+    response = client.translate(body=[text], to_language=['en'])
     translated_text = response[0].get('translations')[0].get('text')
 
     return  translated_text
 
 
-def get_content_safety_measures(client:ContentSafetyClient,toxic_text:str)->int:
-
-    request = AnalyzeTextOptions(text=toxic_text)
-
-    try:
-        response = client.analyze_text(request)
-    except HttpResponseError as e:
-        print("Analyze text failed.")
-        if e.error:
-            print(f"Error code: {e.error.code}")
-            print(f"Error message: {e.error.message}")
+def get_ggwave(text:str)->bytes:
+    """
+    Gets sound encoding for a text using same GibberLink encode.
     
-    hate_result = next(item for item in response.categories_analysis if item.category == TextCategory.HATE)
-    self_harm_result = next(item for item in response.categories_analysis if item.category == TextCategory.SELF_HARM)
-    sexual_result = next(item for item in response.categories_analysis if item.category == TextCategory.SEXUAL)
-    violence_result = next(item for item in response.categories_analysis if item.category == TextCategory.VIOLENCE)
+    Parameters:
+        text: String to transform.
+    """
 
-    hate_score = 1 if hate_result.severity in {3,4,5,6} else 0
-    self_harm_score= 1 if self_harm_result.severity in {3,4,5,6} else 0
-    sexual_score = 1 if sexual_result.severity in {3,4,5,6} else 0
-    violence_score = 1 if violence_result.severity in {3,4,5,6} else 0
+    signal_wave = ggwave.encode(text, protocolId = 1, volume = 20) #bytes
 
-    traffic_lights_measure = [hate_score,self_harm_score,sexual_score,violence_score]
-
-    unsafety = 1 if sum(traffic_lights_measure)>0 else 0 # 1 is unsafe 0 is safe
-
-    return unsafety
+    return  signal_wave
 
 
-def transform_text_to_spectogram(text:str,path:str)->None:
+def transform_text_to_spectogram(text:str,path:str,spectral_color:str)->None:
+    """
+    Get spectogram from a given text analyzing all spectral frequencies.
+    
+    Parameters:
+        text: String to transform.
+        path: str to store the image.
+        spectral_color: Colors to Plot.
+    """
 
     channels = 1
     rate = 48000
     width = 4 #because we use paFloat32
-    signal_wave = ggwave.encode(text, protocolId = 1, volume = 20) #bytes
+    signal_wave = get_ggwave(text)
     frames = int(len(signal_wave) / (channels * width))
     time = frames / rate
     f_c = 0.8125  
@@ -89,104 +96,59 @@ def transform_text_to_spectogram(text:str,path:str)->None:
 
 
     plt.figure(figsize=(20, 7))
-    plt.imshow(abs(coef), extent=[0, max_seconds, 0, f_max_detected], interpolation='bilinear', aspect='auto',cmap='inferno')
+    plt.imshow(abs(coef), extent=[0, max_seconds, 0, f_max_detected], interpolation='bilinear', aspect='auto',cmap=spectral_color)
     plt.axis('off')
     plt.savefig(path, bbox_inches='tight')
     plt.close()
 
-def content_safety_retag(
-                           inputs:list,
-                           safety_client:ContentSafetyClient,
-                           translator_client:TextTranslationClient,
-                           text_analytics_client:TextAnalyticsClient,
-                           )->None:
-
-    '''
-    Content safety by itself didn't identify well some malicious intentions:
-
-    refer: to ms_tag_dataset_sample.csv
-    '''
-
-    content_safety_measures = []
-    full_english_text = []
-    for index,text in enumerate(inputs):
-        
-        print("\nProcessing_text\n")
-        language_detection= text_analytics_client.detect_language(documents = [text], country_hint = 'us')[0]
-        if language_detection.primary_language.name != 'English':
-            text = translate_text(translator_client,text) #Not all inputs are in English
-
-        print("Microsoft Validation")
-        measure = get_content_safety_measures(safety_client,text)
-        full_english_text.append(text)
-        content_safety_measures.append(measure)
-
-        print("Getting Spectogram")
-        if measure == 0:
-            path = f'C:\\Users\\seal6\\OneDrive\\Documentos\\Nueva Carpeta\\Safe_Spectograms\\safe_spectogram_{index}.png'
-            transform_text_to_spectogram(text,path)
-
-        else:
-            path = f'C:\\Users\\seal6\\OneDrive\\Documentos\\Nueva Carpeta\\Unsafe_Spectograms\\unsafe_spectogram_{index}.png'
-            transform_text_to_spectogram(text,path)
-
-    ms_tag_df = pd.DataFrame({
-        'input': full_english_text,
-        'toxicity': content_safety_measures
-    })
-
-    ms_tag_df.to_csv('ms_tag_dataset_sample.csv',index=0)
 
 
-def translate(text_analytics_client:TextAnalyticsClient,
+def language_detect_and_translate(
               translator_client:TextTranslationClient,
+              text_analytics_client:TextAnalyticsClient,
               text:str)->str:
+    """
+    Detects and translate language to englsih
+    
+    Parameters:
+        translator_client: Client for translation.
+        text_analytics_client: Client for text analysis.
+        text: string to validate.
+    """
     language_detection= text_analytics_client.detect_language(documents = [text])[0]
     if language_detection.primary_language.name != 'English':
         text = translate_text(translator_client,text)
 
     return text
 
-def spectral_tagging(inputs:list,
-                    translator_client:TextTranslationClient,
-                    text_analytics_client:TextAnalyticsClient,
-                    path:str,
-                    key:str
-                    )->None:
+
+def process_and_save_spectograms(dataset:pd.DataFrame,
+                                  dataset_name:str, 
+                                  data_type:str, 
+                                  translator_client, 
+                                  text_analytics_client,
+                                  spectral_color:str='inferno'):
+    """
+    Processes a dataset and saves spectrograms in the corresponding folders.
     
-    print(f"Processing {key} text to spectograms" )
+    Parameters:
+        dataset: DataFrame containing the data to process.
+        dataset_name: Name of the set "train" or "test").
+        data_type: Type of data ("safe" or "toxic").
+        translator_client: Client for translation.
+        text_analytics_client: Client for text analysis.
+    """
+    for index, text in dataset.iterrows():
+        text_translated = language_detect_and_translate(translator_client, text_analytics_client, text['user_input'])
+        print(text_translated)
+        path = f'C:\\Users\\seal6\\OneDrive\\Documentos\\Nueva Carpeta\\Spectograms\\{spectral_color}\\{dataset_name}\\\\{data_type}\\{data_type}_spectrogram_{text["id"]}.png'
 
-    full_text = []
-    safety = []
-    for index,text in enumerate(inputs):
-        text = translate(translator_client,text_analytics_client)
-
-        if key =="safe":
-            path = f'C:\\Users\\seal6\\OneDrive\\Documentos\\Nueva Carpeta\\Safe_Spectograms\\safe_spectogram_{index}.png'
-            safety.append(0)
-        else:
-            path = f'C:\\Users\\seal6\\OneDrive\\Documentos\\Nueva Carpeta\\Unsafe_Spectograms\\unsafe_spectogram_{index}.png'
-            safety.append(1)
-        full_text.append(text)
-        transform_text_to_spectogram(text,path)
-        
-        return  full_text,safety
-
-def build_dataframe(input_list,toxicity_list):
-
-    df = pd.DataFrame({
-        'input': input_list,
-        'toxicity': toxicity_list
-    })
-
-    return df
+        transform_text_to_spectogram(text_translated, path,spectral_color)
 
 
 safety_key = os.getenv("CONTENT_SAFETY_KEY")
 safety_endpoint = os.getenv("CONTENT_SAFETY_ENDPOINT")
-
 translator_key = os.getenv("TRANSLATOR_KEY")
-
 multi_service_endpoint = os.getenv("MULTISERVICE_ENDPOINT")
 multi_service_key = os.getenv("MULTISERVICE_KEY")
 
@@ -198,21 +160,35 @@ text_analytics_client = TextAnalyticsClient(endpoint=multi_service_endpoint, cre
 toxic_content = "lmsys/toxic-chat"
 label = 'toxicchat0124'
 full_dataframe = download_data_set(toxic_content,label)
-
+sample = 100
+spectral_color = 'inferno'
 # Original Labeled values
 toxic_dataframe = full_dataframe[full_dataframe['toxicity']==1].copy()
 safe_dataframe = full_dataframe[full_dataframe['toxicity']==0].copy()
 
-mini_toxic = toxic_dataframe['user_input'].sample(n=10,random_state=1)
-mini_safe = safe_dataframe['user_input'].sample(n=10,random_state=1)
-#mini_sample = pd.concat([mini_toxic, mini_safe])
-#user_inputs = list(mini_sample)
+#samples
+mini_toxic = toxic_dataframe['user_input'].sample(n=sample,random_state=1)
+mini_safe = safe_dataframe['user_input'].sample(n=sample,random_state=1)
 
-toxic, toxic_values = spectral_tagging(list(mini_toxic),translator_client,text_analytics_client,'toxic')
-safe, safe_values = spectral_tagging(list(mini_safe),translator_client,text_analytics_client,'safe')
+#Assign id to track samples
+mini_toxic_with_id = mini_toxic.reset_index()  
+mini_safe_with_id = mini_safe.reset_index()
+mini_toxic_with_id.rename(columns={'index': 'id'}, inplace=True)
+mini_safe_with_id.rename(columns={'index': 'id'}, inplace=True)
 
-full_toxicity = toxic_values + safe_values
-full_texts = toxic + safe
+#Split into train and test
+mini_toxic_train, mini_toxic_test = train_test_split(mini_toxic_with_id, test_size=0.2, random_state=1)
+mini_safe_train, mini_safe_test = train_test_split(mini_safe_with_id, test_size=0.2, random_state=1)
 
-df = build_dataframe(full_texts,full_toxicity)
-df.to_csv('dataset_sample.csv',index=0)
+
+process_and_save_spectograms(mini_toxic_train, "train", "toxic", translator_client, text_analytics_client,spectral_color)
+process_and_save_spectograms(mini_safe_train, "train", "safe", translator_client, text_analytics_client,spectral_color)
+process_and_save_spectograms(mini_toxic_test, "test", "toxic", translator_client, text_analytics_client,spectral_color)
+process_and_save_spectograms(mini_safe_test, "test", "safe", translator_client, text_analytics_client,spectral_color)
+
+mini_toxic_train.to_csv('mini_toxic_train.csv', index=False)
+mini_toxic_test.to_csv('mini_toxic_test.csv', index=False)
+mini_safe_train.to_csv('mini_safe_train.csv', index=False)
+mini_safe_test.to_csv('mini_safe_test.csv', index=False)
+
+print("Files exported successfully!")
