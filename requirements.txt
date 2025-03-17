@@ -2,6 +2,7 @@ azure-ai-contentsafety
 azure-ai-textanalytics
 azure-ai-language-conversations
 azure-ai-language-questionanswering
+azure-ai-translation-text==1.0.0b1
 python-dotenv
 fastapi==0.109.1
 uvicorn==0.27.0
