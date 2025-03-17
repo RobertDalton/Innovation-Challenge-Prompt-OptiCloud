@@ -5,3 +5,4 @@ class AnalyzeTextRequest(BaseModel):
 
 class AnalyzeTextResponse(BaseModel):
     detected_language: str
+    iso6391_name: str
