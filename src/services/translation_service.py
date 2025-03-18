@@ -26,16 +26,14 @@ class TranslationService:
         controller = LanguageDetectionController()
         result = await controller.analyze_text(text)
         self.source_language = result['iso6391_name']
-
-        if not self.source_language=="en":
-            with TextTranslationClient(endpoint=self.endpoint, credential=self.credential) as client:
-                try:
-                    target_languages = ["en"]
-                    input_text_elements = [InputTextItem(text=text)]
-                    response = client.translate(content = input_text_elements, to = target_languages, from_parameter = self.source_language)
-                    return self._parse_response(response)
-                except HttpResponseError as e:
-                    return {"error": str(e)}
+        with TextTranslationClient(endpoint=self.endpoint, credential=self.credential) as client:
+            try:
+                target_languages = ["en"]
+                input_text_elements = [InputTextItem(text=text)]
+                response = client.translate(content = input_text_elements, to = target_languages, from_parameter =self.source_language)
+                return self._parse_response(response)
+            except HttpResponseError as e:
+                return {"error": str(e)}
 
     def _parse_response(self, response):
         """Parse tranlate from the response."""
