@@ -1,0 +1,1 @@
+$(conda run -n opticloud which python) -m uvicorn src.main:app --reload

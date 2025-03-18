@@ -6,4 +6,5 @@ azure-ai-translation-text==1.0.0b1
 python-dotenv
 fastapi==0.109.1
 uvicorn==0.27.0
-aiohttp
+requests==2.31.0
+aiohttp[speedups]==3.9.3

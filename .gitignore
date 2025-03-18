@@ -174,3 +174,4 @@ pyrightconfig.json
 
 
 frontend-opticloud/node_modules
+**/__pycache__/
