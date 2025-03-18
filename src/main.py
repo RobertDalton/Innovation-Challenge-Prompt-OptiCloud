@@ -4,6 +4,7 @@ from src.routes.prompt_shield_routes import router as prompt_shield_router
 from src.routes.language_detection_routes import router as language_detection_router
 from src.routes.translation_routes import router as translation_router
 from src.routes.text_security_routes import router as text_security_router
+from src.routes.pii_recognition_routes import router as pii_recognition_router
 
 app = FastAPI(
     title="Content Safety API",
@@ -15,8 +16,9 @@ app = FastAPI(
 app.include_router(content_safety_router, prefix="/api/content-safety", tags=["Content Safety"])
 app.include_router(prompt_shield_router, prefix="/api/prompt-shield", tags=["Prompt Shield"])
 app.include_router(language_detection_router, prefix="/api/language", tags=["Language Detection"])
-app.include_router(translation_router,prefix="/api/language",tags=["Translation"])
+app.include_router(translation_router, prefix="/api/language", tags=["Translation"])
 app.include_router(text_security_router, prefix="/api/text-security", tags=["Text Security"])
+app.include_router(pii_recognition_router, prefix="/api/pii", tags=["PII Recognition"])
 
 if __name__ == "__main__":
     import uvicorn
