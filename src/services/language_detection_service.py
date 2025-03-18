@@ -28,5 +28,6 @@ class LanguageDetectionService:
     def _parse_response(self, response):
         """Extract language from the response."""
         return {
-            "detected_language": response.primary_language.name
+            "detected_language": response.primary_language.name,
+            "iso6391_name": response.primary_language.iso6391_name
         }

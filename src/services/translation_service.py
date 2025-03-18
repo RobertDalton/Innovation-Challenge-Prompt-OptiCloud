@@ -5,6 +5,8 @@ from azure.ai.translation.text import TranslatorCredential
 from azure.ai.translation.text.models import InputTextItem
 from azure.core.exceptions import HttpResponseError
 from dotenv import load_dotenv
+from src.controllers.language_detection_controller import LanguageDetectionController
+
 
 # Load environment variables
 load_dotenv()
@@ -21,6 +23,10 @@ class TranslationService:
 
     async def translate_text(self, text: str):
         """Translate text to english using Translation Service."""
+        controller = LanguageDetectionController()
+        result = await controller.analyze_text(text)
+        self.source_language = result['iso6391_name']
+
         if not self.source_language=="en":
             with TextTranslationClient(endpoint=self.endpoint, credential=self.credential) as client:
                 try:
