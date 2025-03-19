@@ -1,21 +1,22 @@
 import MessageBubble from './MessageBubble';
+import '../styles/colors.css';
 
 const MessageList = ({ messages }) => (
-  <div className="h-full p-4 overflow-y-auto max-w-7xl">
+  <div 
+    style={{
+      scrollbarColor: 'var(--color-element) var(--color-primaryBackground)',
+      scrollbarWidth: 'thin'
+    }}
+    className="h-full p-4 pb-25 overflow-y-auto max-w-7xl
+      scrollbar-thin scrollbar-thumb-rounded-full scrollbar-track-rounded-full
+      hover:scrollbar-thumb-element scrollbar-track-primary-bg"
+  >
     {messages.map((message, index) => (
       <div
         key={index}
         className={`mb-4 ${message.sender === 'user' ? 'text-right' : 'text-left'}`}
       >
-        <div
-          style={{ 
-            backgroundColor: message.sender === 'user' ? 'var(--color-primary)' : 'var(--color-element)',
-            color: 'var(--color-primaryText)'
-          }}
-          className="inline-block rounded-lg px-4 py-2 max-w-[80%]"
-        >
-          {message.text}
-        </div>
+        <MessageBubble message={message} />
       </div>
     ))}
   </div>

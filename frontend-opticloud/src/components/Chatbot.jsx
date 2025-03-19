@@ -54,7 +54,7 @@ const Chatbot = () => {
   return (
     <div className="flex flex-col h-[calc(100vh-64px)] bg-primary-bg">
       <div className="flex-1 flex md:flex-row flex-col overflow-hidden">
-        {/* Giberlink Visualizer - shows at top on mobile, right on desktop */}
+        {/* Giberlink Visualizer */}
         <div className={`
           order-1 md:order-2
           transition-all duration-300 ease-in-out
@@ -70,13 +70,17 @@ const Chatbot = () => {
           />
         </div>
 
-        {/* Message list container */}
+        {/* Message list container - Fixed width and scroll issues */}
         <div className={`
           order-2 md:order-1
           flex-1 transition-all duration-300 ease-in-out relative bg-primary-bg
           ${isGiberlinkMode ? 'h-[60vh] md:h-full md:w-1/2' : 'h-full md:w-full'}
         `}>
-          <MessageList messages={messages} />
+          <div className="h-full flex justify-center">
+            <div className="w-full max-w-3xl px-4 overflow-hidden">
+              <MessageList messages={messages} />
+            </div>
+          </div>
         </div>
       </div>
 
