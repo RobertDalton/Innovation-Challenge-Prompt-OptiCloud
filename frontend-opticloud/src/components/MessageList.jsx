@@ -1,7 +1,7 @@
 import MessageBubble from './MessageBubble';
 
 const MessageList = ({ messages }) => (
-  <div className="h-full p-4 overflow-y-auto">
+  <div className="h-full p-4 overflow-y-auto max-w-7xl">
     {messages.map((message, index) => (
       <div
         key={index}

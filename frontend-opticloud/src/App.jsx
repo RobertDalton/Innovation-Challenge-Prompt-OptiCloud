@@ -25,8 +25,8 @@ function App() {
       root.style.setProperty("--color-secondaryBackground", "#1e2939"); // Gray Blue
     } else if (colorMode === "deuteranopia") {
       // Set colors for Deuteranopia mode
-      root.style.setProperty("--color-primary", "#b9a63e"); // Adjusted color for deuteranopia
-      root.style.setProperty("--color-element", "#5b6266"); // Adjusted color for deuteranopia
+      root.style.setProperty("--color-primary", "#51a2ff"); // Adjusted color for deuteranopia
+      root.style.setProperty("--color-element", "#364153"); // Adjusted color for deuteranopia
       root.style.setProperty("--color-primaryText", "#ffffff");
       root.style.setProperty("--color-secondaryText", "#d1d5db");
       root.style.setProperty("--color-primaryBackground", "#1c1f25");
