@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import Chatbot from './components/Chatbot'
 import Header from './components/Header'
+import GgWaveExample from './components/AudioListener'
 import './App.css'
 
 function App() {
@@ -9,6 +10,7 @@ function App() {
       <Header />
       <main className="flex-1 pt-16">
         <Chatbot />
+        <GgWaveExample />
       </main>
     </div>
   )

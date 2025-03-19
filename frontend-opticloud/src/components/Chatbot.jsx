@@ -2,33 +2,52 @@ import { useState } from 'react';
 import MessageList from './MessageList';
 import ChatInput from './ChatInput';
 import GiberlinkVisualizer from './GiberlinkVisualizer';
+import audioService from '../services/audioService';
 
 const Chatbot = () => {
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isGiberlinkMode, setIsGiberlinkMode] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
 
-  const handleSendMessage = (e) => {
+  const handleSendMessage = async (e) => {
     e.preventDefault();
     if (inputMessage.trim() === '') return;
 
     setMessages([...messages, { text: inputMessage, sender: 'user' }]);
-    setInputMessage('');
-
-    // Simulate bot response
-    setTimeout(() => {
-      if (isGiberlinkMode) {
+    
+    if (isGiberlinkMode) {
+      try {
+        setIsPlaying(true);
+        const { durationMs, promise } = await audioService.sendAudio(inputMessage);
+        
         setMessages(prev => [...prev, { 
-          text: "Converting signal patterns... Detected frequency variations in ultrasonic range", 
+          text: "Converting signal patterns... Transmitting via audio frequencies", 
           sender: 'bot' 
         }]);
-      } else {
+
+        // Wait for audio to complete playing
+        await promise;
+        setIsPlaying(false);
+
+      } catch (error) {
+        console.error('Audio transmission failed:', error);
+        setIsPlaying(false);
+        setMessages(prev => [...prev, { 
+          text: "Failed to transmit audio signal. Please try again.", 
+          sender: 'bot' 
+        }]);
+      }
+    } else {
+      setTimeout(() => {
         setMessages(prev => [...prev, { 
           text: "Thanks for your message! I'm a demo chatbot.", 
           sender: 'bot' 
         }]);
-      }
-    }, 1000);
+      }, 1000);
+    }
+
+    setInputMessage('');
   };
 
   return (
@@ -44,7 +63,10 @@ const Chatbot = () => {
           md:border-l md:border-gray-700
           transform
         `}>
-          <GiberlinkVisualizer messages={messages} />
+          <GiberlinkVisualizer 
+            messages={messages} 
+            isPlaying={isPlaying}
+          />
         </div>
 
         {/* Message List - below visualizer on mobile, left on desktop */}
@@ -67,4 +89,4 @@ const Chatbot = () => {
   );
 };
 
-export default Chatbot; 
+export default Chatbot;

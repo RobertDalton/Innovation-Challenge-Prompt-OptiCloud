@@ -1,23 +1,37 @@
 import { useState, useEffect } from 'react';
 
-const GiberlinkVisualizer = ({ messages }) => {
-  const [barHeights, setBarHeights] = useState([30, 50, 70, 50, 30]);
+const GiberlinkVisualizer = ({ messages, isPlaying = false }) => {
+  const [barHeights, setBarHeights] = useState(new Array(5).fill(10));
+  const [animationInterval, setAnimationInterval] = useState(null);
 
   // Get the latest bot message
   const latestBotMessage = messages.length > 0 
     ? messages.filter(msg => msg.sender === 'bot').pop()
     : null;
 
-  // Simulate sound animation
+  // Control sound animation based on isPlaying prop
   useEffect(() => {
-    const interval = setInterval(() => {
-      setBarHeights(prevHeights => 
-        prevHeights.map(() => Math.random() * 100)
-      );
-    }, 200);
+    if (isPlaying) {
+      const interval = setInterval(() => {
+        setBarHeights(prevHeights => 
+          prevHeights.map(() => Math.random() * 100)
+        );
+      }, 200);
+      setAnimationInterval(interval);
+    } else {
+      if (animationInterval) {
+        clearInterval(animationInterval);
+        setAnimationInterval(null);
+      }
+      setBarHeights(new Array(5).fill(10)); // Reset to default height
+    }
 
-    return () => clearInterval(interval);
-  }, []);
+    return () => {
+      if (animationInterval) {
+        clearInterval(animationInterval);
+      }
+    };
+  }, [isPlaying]);
 
   return (
     <div className="h-full w-full bg-gray-900 border-l border-gray-700 md:animate-slide-in">
@@ -30,11 +44,11 @@ const GiberlinkVisualizer = ({ messages }) => {
             </div>
 
             {/* Sound visualization bars */}
-            <div className="flex items-end justify-center gap-3 h-40 w-full max-w-md">
+            <div className="flex items-end justify-center gap-2 h-40 w-full max-w-md">
               {barHeights.map((height, i) => (
                 <div
                   key={i}
-                  className="w-10 bg-gradient-to-t from-blue-600 to-blue-400 rounded-t-lg transition-all duration-200 ease-in-out"
+                  className="w-8 bg-gradient-to-t from-blue-600 to-blue-400 rounded-t-lg transition-all duration-200 ease-in-out"
                   style={{ height: `${height}%` }}
                 />
               ))}
@@ -46,4 +60,4 @@ const GiberlinkVisualizer = ({ messages }) => {
   );
 };
 
-export default GiberlinkVisualizer; 
+export default GiberlinkVisualizer;
