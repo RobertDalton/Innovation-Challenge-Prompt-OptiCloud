@@ -1,4 +1,13 @@
 @import "tailwindcss";
+
+
+
+/* 
+button {
+  background-color: var(--color-primary);
+  color: var(--color-secondary);
+} */
+
 /* 
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;

@@ -1,4 +1,5 @@
 import { useRef, useEffect, useState } from 'react';
+import '../styles/colors.css';
 
 const ChatInput = ({ inputMessage, setInputMessage, onSendMessage, onGiberlinkModeChange }) => {
   const [isVoiceMode, setIsVoiceMode] = useState(false);
@@ -36,7 +37,10 @@ const ChatInput = ({ inputMessage, setInputMessage, onSendMessage, onGiberlinkMo
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-gray-800 border-t border-gray-700 shadow-lg">
+    <div style={{
+      backgroundColor: 'var(--color-secondaryBackground)',
+      borderColor: 'var(--color-element)'
+    }} className="fixed bottom-0 left-0 right-0 border-t shadow-lg">
       <div className="max-w-3xl mx-auto p-4">
         <form onSubmit={onSendMessage}>
           <div className="flex gap-3 items-center">
@@ -44,11 +48,11 @@ const ChatInput = ({ inputMessage, setInputMessage, onSendMessage, onGiberlinkMo
             <button
               type="button"
               onClick={toggleVoiceMode}
-              className={`p-2 rounded-lg transition-colors ${
-                isVoiceMode 
-                  ? 'bg-blue-600 text-white' 
-                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-              }`}
+              style={{ 
+                backgroundColor: isVoiceMode ? 'var(--color-primary)' : 'var(--color-element)',
+                color: 'var(--color-primaryText)'
+              }}
+              className={`p-2 rounded-lg transition-colors hover:opacity-90`}
               title="Voice Mode"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -58,11 +62,11 @@ const ChatInput = ({ inputMessage, setInputMessage, onSendMessage, onGiberlinkMo
             <button
               type="button"
               onClick={toggleGiberlinkMode}
-              className={`p-2 rounded-lg transition-colors ${
-                isGiberlinkMode 
-                  ? 'bg-blue-600 text-white' 
-                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-              }`}
+              style={{ 
+                backgroundColor: isGiberlinkMode ? 'var(--color-primary)' : 'var(--color-element)',
+                color: 'var(--color-primaryText)'
+              }}
+              className={`p-2 rounded-lg transition-colors hover:opacity-90`}
               title="Giberlink Mode"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -84,18 +88,25 @@ const ChatInput = ({ inputMessage, setInputMessage, onSendMessage, onGiberlinkMo
                     ? "Giberlink mode enabled - Enter your link" 
                     : "Type your message..."
               }
-              className="flex-1 p-3 border border-gray-600 rounded-lg focus:outline-none focus:border-blue-500 bg-gray-700 text-white placeholder-gray-400 resize-none min-h-[44px] max-h-[100px] overflow-y-auto
-              scrollbar-thin scrollbar-thumb-gray-500 scrollbar-track-gray-700 scrollbar-thumb-rounded-full scrollbar-track-rounded-full"
               style={{
-                scrollbarWidth: 'thin',
-                scrollbarColor: '#4B5563 #374151'
+                backgroundColor: 'var(--color-element)',
+                color: 'var(--color-primaryText)',
+                borderColor: 'var(--color-element)',
+                scrollbarColor: 'var(--color-secondaryText) var(--color-element)'
               }}
+              className="flex-1 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary 
+                resize-none min-h-[44px] max-h-[100px] overflow-y-auto
+                scrollbar-thin scrollbar-thumb-rounded-full scrollbar-track-rounded-full"
             />
 
             {/* Send button */}
             <button
               type="submit"
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium h-[44px]"
+              style={{ 
+                backgroundColor: 'var(--color-primary)',
+                color: 'var(--color-primaryText)'
+              }}
+              className="px-6 py-3 rounded-lg hover:opacity-90 transition-colors font-medium h-[44px]"
             >
               Send
             </button>
@@ -106,4 +117,4 @@ const ChatInput = ({ inputMessage, setInputMessage, onSendMessage, onGiberlinkMo
   );
 };
 
-export default ChatInput; 
+export default ChatInput;

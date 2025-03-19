@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import '../styles/colors.css';
 
 const GiberlinkVisualizer = ({ messages, isPlaying = false }) => {
   const [barHeights, setBarHeights] = useState(new Array(5).fill(10));
@@ -34,12 +35,21 @@ const GiberlinkVisualizer = ({ messages, isPlaying = false }) => {
   }, [isPlaying]);
 
   return (
-    <div className="h-full w-full bg-gray-900 border-l border-gray-700 md:animate-slide-in">
+    <div 
+      style={{
+        backgroundColor: 'var(--color-primaryBackground)',
+        borderColor: 'var(--color-element)'
+      }}
+      className="h-full w-full border-l md:animate-slide-in"
+    >
       <div className="h-full flex items-center justify-center p-4">
         {latestBotMessage && (
           <div className="flex flex-col items-center space-y-8">
             {/* Sound interpretation text */}
-            <div className="text-gray-200 text-xl font-medium text-center">
+            <div 
+              style={{ color: 'var(--color-primaryText)' }}
+              className="text-xl font-medium text-center"
+            >
               {latestBotMessage.text}
             </div>
 
@@ -48,8 +58,11 @@ const GiberlinkVisualizer = ({ messages, isPlaying = false }) => {
               {barHeights.map((height, i) => (
                 <div
                   key={i}
-                  className="w-8 bg-gradient-to-t from-blue-600 to-blue-400 rounded-t-lg transition-all duration-200 ease-in-out"
-                  style={{ height: `${height}%` }}
+                  style={{ 
+                    height: `${height}%`,
+                    background: `linear-gradient(to top, var(--color-primary), var(--color-element))`
+                  }}
+                  className="w-8 rounded-t-lg transition-all duration-200 ease-in-out"
                 />
               ))}
             </div>
