@@ -6,3 +6,13 @@ azure-functions
 azurefunctions-extensions-http-fastapi
 openai
 httpx
+azure-ai-contentsafety
+azure-ai-textanalytics
+azure-ai-language-conversations
+azure-ai-language-questionanswering
+azure-ai-translation-text==1.0.0b1
+python-dotenv
+fastapi
+uvicorn
+requests==2.31.0
+aiohttp[speedups]==3.9.3
