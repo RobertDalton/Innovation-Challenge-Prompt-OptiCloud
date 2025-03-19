@@ -102,6 +102,36 @@ def transform_text_to_spectogram(text:str,path:str,spectral_color:str)->None:
     plt.close()
 
 
+def transform_text_to_spectogram_high_frequency(text:str,path:str,spectral_color:str)->None:
+    """
+    Get spectogram from a given text analyzing in high frequencies.
+    
+    Parameters:
+        text: String to transform.
+        path: str to store the image.
+        spectral_color: Colors to Plot.
+    """
+
+    channels = 1
+    rate = 48000
+    width = 4 #because we use paFloat32
+    signal_wave = get_ggwave(text)
+    frames = int(len(signal_wave) / (channels * width))
+    time = frames / rate
+    scales = np.arange(1, 50)  # scales for CWT
+    audio_array = np.frombuffer(signal_wave, dtype=np.float32)
+    times = np.linspace(0, time, num=frames)
+    max_seconds = round(times[-1],2)*60
+
+    coef, frequencies = pywt.cwt(audio_array, scales, 'morl', sampling_period=1/rate)
+
+    plt.figure(figsize=(20, 7))
+    plt.imshow(abs(coef), extent=[0, max_seconds, 0, 10], interpolation='bilinear', aspect='auto',cmap=spectral_color)
+    plt.axis('off')
+    plt.savefig(path, bbox_inches='tight')
+    plt.close()
+
+
 
 def language_detect_and_translate(
               translator_client:TextTranslationClient,
@@ -141,9 +171,9 @@ def process_and_save_spectograms(dataset:pd.DataFrame,
     for index, text in dataset.iterrows():
         text_translated = language_detect_and_translate(translator_client, text_analytics_client, text['user_input'])
         print(text_translated)
-        path = f'C:\\Users\\seal6\\OneDrive\\Documentos\\Nueva Carpeta\\Spectograms\\{spectral_color}\\{dataset_name}\\\\{data_type}\\{data_type}_spectrogram_{text["id"]}.png'
+        path = f'C:\\Users\\seal6\\OneDrive\\Documentos\\Nueva Carpeta\\High_Spectograms\\{spectral_color}\\{dataset_name}\\\\{data_type}\\{data_type}_spectrogram_{text["id"]}.png'
 
-        transform_text_to_spectogram(text_translated, path,spectral_color)
+        transform_text_to_spectogram_high_frequency(text_translated, path,spectral_color)
 
 
 safety_key = os.getenv("CONTENT_SAFETY_KEY")
@@ -160,35 +190,47 @@ text_analytics_client = TextAnalyticsClient(endpoint=multi_service_endpoint, cre
 toxic_content = "lmsys/toxic-chat"
 label = 'toxicchat0124'
 full_dataframe = download_data_set(toxic_content,label)
-sample = 100
+sample = 200
 spectral_color = 'inferno'
 # Original Labeled values
 toxic_dataframe = full_dataframe[full_dataframe['toxicity']==1].copy()
 safe_dataframe = full_dataframe[full_dataframe['toxicity']==0].copy()
+sensible_dataframe = pd.read_csv("sensible_samples.csv")
 
 #samples
 mini_toxic = toxic_dataframe['user_input'].sample(n=sample,random_state=1)
 mini_safe = safe_dataframe['user_input'].sample(n=sample,random_state=1)
+mini_sensible = sensible_dataframe['prompt'].sample(n=sample,random_state=1)
 
 #Assign id to track samples
 mini_toxic_with_id = mini_toxic.reset_index()  
 mini_safe_with_id = mini_safe.reset_index()
+mini_sensible_with_id = mini_sensible.reset_index()
 mini_toxic_with_id.rename(columns={'index': 'id'}, inplace=True)
 mini_safe_with_id.rename(columns={'index': 'id'}, inplace=True)
+mini_sensible_with_id.rename(columns={'index': 'id'}, inplace=True)
+mini_sensible_with_id.rename(columns={'prompt': 'user_input'}, inplace=True)
+
 
 #Split into train and test
 mini_toxic_train, mini_toxic_test = train_test_split(mini_toxic_with_id, test_size=0.2, random_state=1)
 mini_safe_train, mini_safe_test = train_test_split(mini_safe_with_id, test_size=0.2, random_state=1)
-
+mini_sensible_train, mini_sensible_test = train_test_split(mini_sensible_with_id, test_size=0.2, random_state=1)
 
 process_and_save_spectograms(mini_toxic_train, "train", "toxic", translator_client, text_analytics_client,spectral_color)
 process_and_save_spectograms(mini_safe_train, "train", "safe", translator_client, text_analytics_client,spectral_color)
 process_and_save_spectograms(mini_toxic_test, "test", "toxic", translator_client, text_analytics_client,spectral_color)
 process_and_save_spectograms(mini_safe_test, "test", "safe", translator_client, text_analytics_client,spectral_color)
+process_and_save_spectograms(mini_sensible_test, "test", "sensible", translator_client, text_analytics_client,spectral_color)
+process_and_save_spectograms(mini_sensible_train, "train", "sensible", translator_client, text_analytics_client,spectral_color)
+
 
 mini_toxic_train.to_csv('mini_toxic_train.csv', index=False)
 mini_toxic_test.to_csv('mini_toxic_test.csv', index=False)
 mini_safe_train.to_csv('mini_safe_train.csv', index=False)
 mini_safe_test.to_csv('mini_safe_test.csv', index=False)
+mini_sensible_train.to_csv('mini_sensible_train.csv', index=False)
+mini_sensible_test.to_csv('mini_sensible_test.csv', index=False)
+
 
 print("Files exported successfully!")
