@@ -4,11 +4,13 @@ import Header from "./components/Header";
 import GgWaveExample from "./components/AudioListener";
 import "./App.css";
 
-function App() {
+const App = () => {
   const [colorMode, setColorMode] = useState(() => {
     // Initialize from localStorage if available
     return localStorage.getItem("colorblind-mode") || "normal";
   });
+
+  const [isSpeechMode, setIsSpeechMode] = useState(false);
 
   useEffect(() => {
     // Save to localStorage when mode changes
@@ -52,9 +54,13 @@ function App() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header setColorMode={setColorMode} currentMode={colorMode} />
+      <Header 
+        setColorMode={setColorMode} 
+        currentMode={colorMode} 
+        onSpeechModeChange={setIsSpeechMode}
+      />
       <main className="flex-1 pt-16">
-        <Chatbot />
+        <Chatbot isSpeechMode={isSpeechMode} />
       </main>
     </div>
   );
