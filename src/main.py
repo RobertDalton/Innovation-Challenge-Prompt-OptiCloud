@@ -8,7 +8,7 @@ from src.routes.text_security_routes import router as text_security_router
 from src.routes.pii_recognition_routes import router as pii_recognition_router
 from src.routes.text_cleaner_routes import router as text_cleaner_router
 from src.routes.spectral_shield_route import router as spectral_shield_router
-from src.routes.speech_to_text_routes import router as speech_router
+# from src.routes.speech_to_text_routes import router as speech_router
 from src.routes.response_fine_tuning_routes import router as response_fine_tuning_router
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -32,7 +32,7 @@ app.include_router(translation_router, prefix="/api/language", tags=["Translatio
 app.include_router(text_security_router, prefix="/api/text-security", tags=["Text Security"])
 app.include_router(pii_recognition_router, prefix="/api/pii", tags=["PII Recognition"])
 app.include_router(text_cleaner_router, prefix="/api/text-cleaner", tags=["Text Cleaning"])
-app.include_router(speech_router, prefix="/api/speech", tags=["Speech"])
+# app.include_router(speech_router, prefix="/api/speech", tags=["Speech"])
 app.include_router(response_fine_tuning_router, prefix="/api/request", tags=["Request Fine Tunning Model"])
 app.include_router(spectral_shield_router, prefix="/api/spectral-shield", tags=["Spectral Prediction"])
 

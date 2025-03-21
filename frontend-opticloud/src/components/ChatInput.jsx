@@ -142,7 +142,7 @@ const ChatInput = ({
                 backgroundColor: "var(--color-primary)",
                 color: "var(--color-primaryText)",
               }}
-              className="px-6 py-3 rounded-lg hover:opacity-90 transition-colors font-medium h-[44px]"
+              className="px-6 py-3 rounded-lg hover:opacity-90 transition-colors font-medium h-[44px] cursor-pointer"
             >
               Send
             </button>

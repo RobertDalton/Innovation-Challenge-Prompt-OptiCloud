@@ -8,6 +8,8 @@ class TextSecurityController:
 
     async def analyze_text(self, text: str) -> TextSecurityResponse:
         result = await self.pipeline.analyze_text(text)
+        print("result is here," ,result)
+        
         if "error" in result:
             raise HTTPException(status_code=500, detail=result["error"])
         return TextSecurityResponse(**result)

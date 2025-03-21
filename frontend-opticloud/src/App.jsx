@@ -1,9 +1,7 @@
 import { useState, useEffect } from "react";
 import Chatbot from "./components/Chatbot";
 import Header from "./components/Header";
-import GgWaveExample from "./components/AudioListener";
 import "./App.css";
-import SampleComponent from "./components/SampleComponent";
 
 const App = () => {
   const [colorMode, setColorMode] = useState(() => {
@@ -62,7 +60,6 @@ const App = () => {
       />
       <main className="flex-1 pt-16">
         <Chatbot isSpeechMode={isSpeechMode} />
-        <SampleComponent />
       </main>
     </div>
   );

@@ -17,7 +17,7 @@ const SecurityStats = ({ securityData }) => {
           <span style={{ color: "var(--color-primaryText)" }}>Status:</span>
           <span
             style={{
-              color: securityData.safe ? "var(--color-primary)" : "#ff4444",
+              color: securityData.safe ? "#03bf4d" : "#ff4444",
             }}
             className="font-medium"
           >
@@ -89,8 +89,17 @@ const SecurityStats = ({ securityData }) => {
         </div>
 
         {securityData.pii_detected && (
-          <div className="bg-red-500 border-l-4 border-red-500 text-red-700 p-4 rounded-lg shadow-md">
-            <p className="font-semibold">Clear the next information:</p>
+          <div
+            className="border-l-4 border-red-500 p-4 rounded-lg shadow-md"
+            style={{
+              backgroundColor: "var(--color-primaryBackground)",
+              color: "var(--color-primaryText)",
+              borderColor: "var(--color-primary)",
+            }}
+          >
+            <p className="font-semibold">
+              Found the next personal information:
+            </p>
             <ul className="list-disc pl-5">
               {securityData.pii_results.entities.map((e, index) => (
                 <li key={index} className="text-sm font-medium">
@@ -102,10 +111,7 @@ const SecurityStats = ({ securityData }) => {
         )}
 
         <div className="mt-4">
-          <h3
-            className="pb-2"
-            style={{ color: "var(--color-primaryText)" }}
-          >
+          <h3 className="pb-2" style={{ color: "var(--color-primaryText)" }}>
             Content Safety Results:
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -146,9 +152,7 @@ const SecurityStats = ({ securityData }) => {
                   </span>
                   <span
                     className={`font-semibold ${
-                      item.value > 5
-                        ? "text-red-600"
-                        : "text-white"
+                      item.value > 3 ? "text-red-500" : "text-green-500"
                     }`}
                   >
                     {item.value}
@@ -164,10 +168,16 @@ const SecurityStats = ({ securityData }) => {
             Attack Detected:
           </span>
           <span
-            style={{ color: "var(--color-primaryText)" }}
-            className="font-medium"
+            style={
+              securityData.prompt_shield_results.userPromptAnalysis
+                .attackDetected
+                ? { color: "#ff4444" }
+                : { color: "#03bf4d" }
+            }
+            className="font-medium text-green-500"
           >
-            {securityData.prompt_shield_results.userPromptAnalysis.attackDetected
+            {securityData.prompt_shield_results.userPromptAnalysis
+              .attackDetected
               ? "Yes"
               : "No"}
           </span>

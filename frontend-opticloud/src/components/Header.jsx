@@ -72,7 +72,7 @@ const Header = ({ setColorMode, currentMode, onSpeechModeChange }) => {
                 : "var(--color-element)",
               color: "var(--color-primaryText)",
             }}
-            className="flex items-center space-x-2 px-4 py-2 rounded-lg hover:opacity-90 transition-opacity"
+            className="flex items-center space-x-2 px-4 py-2 rounded-lg hover:opacity-90 transition-opacity cursor-pointer"
             aria-label="Toggle Speech Mode"
             title="Toggle Speech Mode"
           >
@@ -99,7 +99,7 @@ const Header = ({ setColorMode, currentMode, onSpeechModeChange }) => {
                 backgroundColor: "var(--color-element)",
                 color: "var(--color-primaryText)",
               }}
-              className="flex items-center space-x-2 px-4 py-2 rounded-lg hover:opacity-90 transition-opacity"
+              className="flex items-center space-x-2 px-4 py-2 rounded-lg hover:opacity-90 transition-opacity cursor-pointer"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"

@@ -6,6 +6,7 @@ from src.services.translation_service import TranslationService
 from src.services.pii_recognition_service import PIIRecognitionService
 from src.services.text_cleaner_service import TextCleanerService
 
+
 class TextSecurityPipeline:
     def __init__(self):
         self.language_detector = LanguageDetectionService()
@@ -14,7 +15,7 @@ class TextSecurityPipeline:
         self.content_safety = ContentSafetyService()
         self.prompt_shield = PromptShieldService()
         self.text_cleaner = TextCleanerService()
-        self.severity_threshold = 4
+        self.severity_threshold = 3
 
     async def analyze_text(self, text: str) -> Dict[str, Any]:
         try:
@@ -22,17 +23,17 @@ class TextSecurityPipeline:
             clean_result = self.text_cleaner.clean_text(text)
             if clean_result.error:
                 return {"error": clean_result.error}
-            
+
             working_text = clean_result.cleaned_text
-            
+
             # Step 2: Language detection step
             language = await self.language_detector.analyze_text(working_text)
             translated = False
 
             # Step 3: Translation step
-            if language['iso6391_name'] != 'en':
+            if language["iso6391_name"] != "en":
                 translation_result = await self.translator.translate_text(working_text)
-                working_text = translation_result['translation']
+                working_text = translation_result["translation"]
                 translated = True
 
             # Step 4: Check for PII
@@ -46,37 +47,44 @@ class TextSecurityPipeline:
 
             # Step 5: Check content safety
             safety_result = await self.content_safety.analyze_text(working_text)
-            
+
             if "error" in safety_result:
                 return {"error": safety_result["error"]}
 
             content_safe = all(
-                severity < self.severity_threshold 
+                severity < self.severity_threshold
                 for severity in [
                     safety_result["hate_severity"],
                     safety_result["self_harm_severity"],
                     safety_result["sexual_severity"],
-                    safety_result["violence_severity"]
+                    safety_result["violence_severity"],
                 ]
+            )
+
+            # Step 6: Check prompt shield
+            shield_result = self.prompt_shield.shield_prompt(working_text)
+
+            if "error" in shield_result:
+                return {"error": shield_result["error"]}
+
+            prompt_safe = not shield_result["userPromptAnalysis"][
+                "attackDetected"
+            ] and all(
+                not doc["attackDetected"]
+                for doc in shield_result.get("documentsAnalysis", [])
             )
 
             if not content_safe:
                 return {
                     "safe": False,
-                    "reason": "Content safety check failed",
-                    "details": safety_result
+                    "translated": translated,
+                    "cleaned_text": clean_result.cleaned_text,
+                    "characters_removed": clean_result.characters_removed,
+                    "pii_detected": bool(pii_result.get("entities")),
+                    "pii_results": pii_result,
+                    "content_safety_results": safety_result,
+                    "prompt_shield_results": shield_result,
                 }
-
-            # Step 6: Check prompt shield
-            shield_result = self.prompt_shield.shield_prompt(working_text)
-            
-            if "error" in shield_result:
-                return {"error": shield_result["error"]}
-
-            prompt_safe = (
-                not shield_result["userPromptAnalysis"]["attackDetected"] and
-                all(not doc["attackDetected"] for doc in shield_result.get("documentsAnalysis", []))
-            )
 
             # Step 7: Return response
             return {
@@ -87,7 +95,7 @@ class TextSecurityPipeline:
                 "pii_detected": bool(pii_result.get("entities")),
                 "pii_results": pii_result,
                 "content_safety_results": safety_result,
-                "prompt_shield_results": shield_result
+                "prompt_shield_results": shield_result,
             }
 
         except Exception as e:
