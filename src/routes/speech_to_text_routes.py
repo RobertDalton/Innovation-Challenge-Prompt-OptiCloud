@@ -5,6 +5,6 @@ from src.models.speech_to_text_model import SpeechTextResponse
 router = APIRouter()
 controller = SpeechController()
 
-@router.post("/speech-translate", response_model=SpeechTextResponse)
+@router.get("/speech-translate", response_model=SpeechTextResponse)
 async def analyze_text():
     return await controller.translate_text()

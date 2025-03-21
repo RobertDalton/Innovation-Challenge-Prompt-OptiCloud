@@ -17,3 +17,4 @@ uvicorn
 requests==2.31.0
 aiohttp[speedups]==3.9.3
 azure-cognitiveservices-speech==1.30.0
+httpx
