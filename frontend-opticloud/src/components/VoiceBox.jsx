@@ -85,7 +85,7 @@ const VoiceBox = ({ onVoiceResult, isActive }) => {
                 </div>
             </div>
             <p style={{ color: 'var(--color-primaryText)' }} className="text-sm font-medium">
-                {isListening ? 'Listening...' : 'Click to speak'}
+                {isListening ? 'Listening...' : 'Speech Mode is on'}
             </p>
             {error && (
                 <p style={{ color: 'var(--color-primary)' }} className="text-xs text-center">

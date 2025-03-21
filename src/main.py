@@ -1,6 +1,11 @@
+<<<<<<< HEAD
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+=======
 from fastapi import FastAPI, APIRouter
 from pydantic import BaseModel
 
+>>>>>>> 16b44b1ba7bec676c31d7bd80e456b759830a9c9
 from src.routes.content_safety_routes import router as content_safety_router
 from src.routes.prompt_shield_routes import router as prompt_shield_router
 from src.routes.language_detection_routes import router as language_detection_router
