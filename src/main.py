@@ -4,7 +4,7 @@ from routes.spectral_shield_route import router as spectral_shield_router
 
 app = FastAPI(
     title="Spectral Shield API",
-    description="API to prevent toxic and sensible user prompts using spectograms",
+    description="API to prevent toxic user prompts using spectogram ggwave encoding (Gibberlink).",
     version="1.0"
 )
 

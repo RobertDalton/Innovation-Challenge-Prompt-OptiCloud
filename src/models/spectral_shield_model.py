@@ -6,5 +6,6 @@ class SpectralShieldRequest(BaseModel):
 class SpectralShieldResponse(BaseModel):
     toxic: float
     safe: float
+    decision: str
     audio_url: str
     spectogram_url: str
