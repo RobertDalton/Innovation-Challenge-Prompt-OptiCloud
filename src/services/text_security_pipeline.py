@@ -14,7 +14,7 @@ class TextSecurityPipeline:
         self.content_safety = ContentSafetyService()
         self.prompt_shield = PromptShieldService()
         self.text_cleaner = TextCleanerService()
-        self.severity_threshold = 5
+        self.severity_threshold = 4
 
     async def analyze_text(self, text: str) -> Dict[str, Any]:
         try:
