@@ -38,27 +38,27 @@ app.include_router(response_fine_tuning_router, prefix="/api/request", tags=["Re
 
 
 
-#testing
+# #testing
 
-# Definir un modelo de entrada para recibir un string
-class RequestModel(BaseModel):
-    text: str
+# # Definir un modelo de entrada para recibir un string
+# class RequestModel(BaseModel):
+#     text: str
 
-# Crear un router para la API de "Request Fine Tuning Model"
-response_fine_tuning_router = APIRouter()
+# # Crear un router para la API de "Request Fine Tuning Model"
+# response_fine_tuning_router = APIRouter()
 
-@response_fine_tuning_router.post("/testing")
-async def get_fine_tuning_response(request: RequestModel):
-    return {
-        "toxic": 0.72153,
-        "safe": 0.27847,
-        "audio_url": "https://res.cloudinary.com/de69sgtob/video/upload/v1742451362/spectral_fc833736-0524-40d8-956f-872d8c4610e2.wav.wav",
-        "spectogram_url": "https://res.cloudinary.com/de69sgtob/image/upload/v1742451364/spectral_5f595540-d321-46b3-a61c-aacc8ae67a40.png.png"
-    }
+# @response_fine_tuning_router.post("/testing")
+# async def get_fine_tuning_response(request: RequestModel):
+#     return {
+#         "toxic": 0.72153,
+#         "safe": 0.27847,
+#         "audio_url": "https://res.cloudinary.com/de69sgtob/video/upload/v1742451362/spectral_fc833736-0524-40d8-956f-872d8c4610e2.wav.wav",
+#         "spectogram_url": "https://res.cloudinary.com/de69sgtob/image/upload/v1742451364/spectral_5f595540-d321-46b3-a61c-aacc8ae67a40.png.png"
+#     }
 
-# Incluir el router con el prefijo y los tags
-app.include_router(response_fine_tuning_router, prefix="/api/test", tags=["Request Fine Tuning Model"])
-#testing
+# # Incluir el router con el prefijo y los tags
+# app.include_router(response_fine_tuning_router, prefix="/api/test", tags=["Request Fine Tuning Model"])
+# #testing
 
 
 

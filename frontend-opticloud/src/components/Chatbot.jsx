@@ -3,12 +3,12 @@ import MessageList from "./MessageList";
 import ChatInput from "./ChatInput";
 import VoiceBox from "./VoiceBox";
 import audioService from "../services/audioService";
-import fineTunedModelService from "../services/fineTunedModelService";
 import textSecurityService from "../services/textSecurityService";
 import spectralShieldService from "../services/spectralShieldService";
 import "../styles/colors.css";
 import SpectralModeComponent from "./SpectralModeComponent";
 import SecurityPipelineComponent from "./SecurityPipelineComponent";
+import fineTunedModelService from "../services/fineTunedModelService";
 
 const Chatbot = ({ isSpeechMode }) => {
   const [messages, setMessages] = useState([]);
@@ -18,18 +18,6 @@ const Chatbot = ({ isSpeechMode }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [spectralData, setSpectralData] = useState(null);
   const [securityData, setSecurityData] = useState(null);
-
-  const checkTextSecurity = async (text) => {
-    const securityResult = await textSecurityService.analyzeText(text);
-    setSecurityData(securityResult);
-    return securityResult.safe;
-  };
-
-  const analyzeSpectralData = async (text) => {
-    const spectralResult = await spectralShieldService.analyzeText(text);
-    setSpectralData(spectralResult);
-    return spectralResult;
-  };
 
   const handleSpectralMode = async (message) => {
     try {
@@ -65,6 +53,69 @@ const Chatbot = ({ isSpeechMode }) => {
     }
   };
 
+  const fetchStreamingData = async (message) => {
+    try {
+      // 3. Make the request to the streaming API.
+      const response = await fetch(
+        "https://opticloud-http-streaming.azurewebsites.net/generate-text",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "text/event-stream",
+          },
+          body: JSON.stringify({ prompt: message }), // Send the user message
+        }
+      );
+
+      if (!response.body) {
+        console.error("No response body");
+        setMessages((prev) => [
+          ...prev,
+          {
+            text: "Failed to receive a response from the server.",
+            sender: "bot",
+            error: true,
+          },
+        ]);
+        return;
+      }
+
+      const reader = response.body
+        .pipeThrough(new TextDecoderStream())
+        .getReader();
+
+      let result = "";
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done || !value) break;
+
+        console.log("Received:", value);
+        result += value;
+      }
+
+      // Update the messages in real-time
+      setMessages((prev) => [
+        ...prev,
+        {
+          text: result,
+          sender: "bot",
+          isTyping: true,
+        },
+      ]);
+    } catch (error) {
+      console.error("Error during streaming API request:", error);
+      setMessages((prev) => [
+        ...prev,
+        {
+          text: "An error occurred while fetching data. Please try again.",
+          sender: "bot",
+          error: true,
+        },
+      ]);
+    }
+  };
+
   const handleSecurityPipeline = async (message) => {
     try {
       setMessages((prev) => [
@@ -77,9 +128,22 @@ const Chatbot = ({ isSpeechMode }) => {
       ]);
 
       const securityResult = await textSecurityService.analyzeText(message);
-      console.log(securityResult);
-      
       setSecurityData(securityResult);
+
+      if (!securityResult.safe) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            text: "Security check detected potential issues. Cannot proceed.",
+            sender: "bot",
+            securityData: securityResult,
+            error: true,
+          },
+        ]);
+        return;
+      }
+
+      fetchStreamingData(message);
 
       setMessages((prev) => {
         const filtered = prev.filter((m) => !m.isTyping);
