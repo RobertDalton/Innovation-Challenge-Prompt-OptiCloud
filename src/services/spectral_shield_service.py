@@ -19,7 +19,11 @@ import ggwave
 from azure.ai.translation.text import TextTranslationClient
 from azure.ai.textanalytics import TextAnalyticsClient
 from azure.core.credentials import AzureKeyCredential
+from azure.ai.translation.text import TranslatorCredential
+from azure.ai.translation.text.models import InputTextItem
+
 from dotenv import load_dotenv
+
 
 class SpectralShieldService:
     """
@@ -38,7 +42,7 @@ class SpectralShieldService:
     def __init__(self):
         
         load_dotenv()
-        self.translator_key = os.getenv("TRANSLATOR_KEY")
+        self.translation_key = os.getenv("TRANSLATOR_KEY")
         self.translator_endpoint = os.getenv("TRANSLATOR_ENDPOINT")
         self.multiservice_endpoint = os.getenv("MULTISERVICE_ENDPOINT")
         self.multiservice_key = os.getenv("MULTISERVICE_KEY")
@@ -54,7 +58,8 @@ class SpectralShieldService:
             "Prediction-Key": f"{self.spectral_shield_prediction_key}",
             "Content-Type": "application/octet-stream"
         }
-
+        self.translation_region = os.getenv("TRANSLATION_REGION")
+        self.translator_key = TranslatorCredential(self.translation_key,self.translation_region)
         self.translator_client, self.text_analytics_client = self._initialize_clients()
 
 
@@ -78,7 +83,7 @@ class SpectralShieldService:
                 api_secret=self.cloudinary_api_secret
             )
             # Detect and translate the text
-            text = self.language_detect_and_translate(self.translator_client, self.text_analytics_client, text)
+            text = self.language_detect_and_translate(self.translator_client,self.text_analytics_client, text)
 
             # Generate waveform and calculate wavelet coefficients
             waveform = self.get_ggwave(text)
@@ -108,39 +113,48 @@ class SpectralShieldService:
         """
         Initialize Azure clients for translation and text analytics.
         """
-        translator_client = TextTranslationClient(
-            credential=AzureKeyCredential(self.translator_key), region='eastus'
-        )
-        text_analytics_client = TextAnalyticsClient(
-            endpoint=self.multiservice_endpoint, 
-            credential=AzureKeyCredential(self.multiservice_key)
-        )
+        try:
+            translator_client = TextTranslationClient(
+                credential=self.translator_key, region = self.translation_region
+            )
+            text_analytics_client = TextAnalyticsClient(
+                endpoint=self.multiservice_endpoint, 
+                credential=AzureKeyCredential(self.multiservice_key)
+            )
+        except Exception as e:
+            raise ValueError(f"Azure client instances failed: {e}")
+
         return translator_client, text_analytics_client
 
     def _process_and_upload_files(self, waveform:bytes, channels:int, rate:int, width:int, spectogram:bytes)->Union[str,str]:
         """
         Generate, upload, and clean up files (audio and spectrogram).
         """
-        audio_path = self.generate_audio_file(waveform, channels, rate, width)
-        audio_url = self.upload_to_cloudinary(audio_path, resource_type='video')
-        spectogram_url = self.upload_to_cloudinary(spectogram, resource_type='image')
+        try:
+            audio_path = self.generate_audio_file(waveform, channels, rate, width)
+            audio_url = self.upload_to_cloudinary(audio_path, resource_type='video')
+            spectogram_url = self.upload_to_cloudinary(spectogram, resource_type='image')
 
-        if Path(audio_path).exists():
-            os.remove(audio_path)
+            if Path(audio_path).exists():
+                os.remove(audio_path)
+        except Exception as e:
+            raise ValueError(f"Couldn't Generate urls: {e}")
 
         return audio_url, spectogram_url
 
 
-    def translate_text(self,client:TextTranslationClient,text:str)->str:
+    def translate_text(self,client:TextTranslationClient,text:str,language:str)->str:
         """
         Translate Text to English.
         
         Parameters:
             client: TextTranslationClient.
             text: String to transform.
+            language: Detected Language.
         """
-
-        response = client.translate(body=[text], to_language=['en'])
+        target_languages = ["en"]
+        input_text_elements = [InputTextItem(text=text)]
+        response = client.translate(content = input_text_elements, to = target_languages, from_parameter=language)
         translated_text = response[0].get('translations')[0].get('text')
 
         return  translated_text
@@ -158,9 +172,13 @@ class SpectralShieldService:
             text_analytics_client: Client for text analysis.
             text: string to validate.
         """
-        language_detection= text_analytics_client.detect_language(documents = [text])[0]
-        if language_detection.primary_language.name != 'English':
-            text = self.translate_text(translator_client,text)
+        try:
+            language_detection= text_analytics_client.detect_language(documents = [text])[0]
+            language = language_detection.primary_language.iso6391_name
+            if  language != 'en':
+                text = self.translate_text(translator_client,text,language)
+        except Exception as e:
+            raise ValueError(f"Translation Failed: {e}")
 
         return text
 
@@ -198,17 +216,14 @@ class SpectralShieldService:
                 The keys are tag names, and the values are probabilities rounded to 5 decimal places.
                 If the response fails, returns a dictionary with an "Error" key containing the error message.
         """
-
         response = requests.post(url, headers=headers, data=file_data)
-
         if response.status_code == 200:
             response_data = response.json()
             predictions = {item["tagName"]: round(item["probability"], 5) 
                             for item in response_data["predictions"]}
             return predictions
         else:
-            return {"Error": response.text}
-
+            raise ValueError(f"Prediction Failed {response.text}")
 
 
     def generate_audio_file(self,waveform:bytes, channels:int=1, rate:int=48000, sample_width:int=4):
@@ -248,15 +263,18 @@ class SpectralShieldService:
         Returns:
             bytes: The spectrogram image data in PNG format.
         """
-        image_bytes = io.BytesIO()
-        plt.figure(figsize=(20, 7))
-        plt.imshow(coef, extent=[0, max_seconds, 0, 10], interpolation='bilinear', aspect='auto', cmap=spectral_color)
-        plt.axis('off')
-        plt.savefig(image_bytes, bbox_inches='tight',format='png')
+        try:
+            image_bytes = io.BytesIO()
+            plt.figure(figsize=(20, 7))
+            plt.imshow(coef, extent=[0, max_seconds, 0, 10], interpolation='bilinear', aspect='auto', cmap=spectral_color)
+            plt.axis('off')
+            plt.savefig(image_bytes, bbox_inches='tight',format='png')
 
-        image_bytes.seek(0)
-        image_data = image_bytes.getvalue()
-        plt.close()
+            image_bytes.seek(0)
+            image_data = image_bytes.getvalue()
+            plt.close()
+        except Exception as e:
+            raise ValueError(f"Spectogram generation failed {e}")
 
         return image_data
 
@@ -268,7 +286,10 @@ class SpectralShieldService:
             text: String to transform.
         """
 
-        signal_wave = ggwave.encode(text, protocolId = 1, volume = 20) #bytes
+        try:
+            signal_wave = ggwave.encode(text, protocolId = 1, volume = 20) #bytes
+        except Exception as e:
+            raise ValueError(f"Signal encoding failed {e}")
 
         return  signal_wave
 
@@ -287,16 +308,18 @@ class SpectralShieldService:
                 - int: The sample rate of the signal in Hz.
                 - int: The sample width (in bytes) of the signal.
         """
-        channels = 1
-        rate = 48000
-        width = 4 #because we use paFloat32
-        frames = int(len(signal_wave) / (channels * width))
-        time = frames / rate
-        scales = np.arange(1, 50)  # scales for CWT
-        audio_array = np.frombuffer(signal_wave, dtype=np.float32)
-        times = np.linspace(0, time, num=frames)
-        max_seconds = round(times[-1],2)*60
-
-        coef, _ = pywt.cwt(audio_array, scales, 'morl', sampling_period=1/rate)
+        try:
+            channels = 1
+            rate = 48000
+            width = 4 #because we use paFloat32
+            frames = int(len(signal_wave) / (channels * width))
+            time = frames / rate
+            scales = np.arange(1, 50)  # scales for CWT
+            audio_array = np.frombuffer(signal_wave, dtype=np.float32)
+            times = np.linspace(0, time, num=frames)
+            max_seconds = round(times[-1],2)*60
+            coef, _ = pywt.cwt(audio_array, scales, 'morl', sampling_period=1/rate)
+        except Exception as e:
+            raise ValueError(f"Wavelet coeficients failed: {e}")
 
         return abs(coef), max_seconds, channels, rate, width
