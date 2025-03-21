@@ -1,12 +1,27 @@
-azure_storage==0.37.0
-cloudinary==1.43.0
-fastapi==0.115.11
-ggwave==0.4.2
-matplotlib==3.10.1
-numpy==2.2.4
-pydantic==2.10.6
-Requests==2.32.3
-azure-ai-textanalytics==5.3.0
-azure-ai-translation-text==1.0.1
-azure-core==1.32.0
-PyWavelets==1.6.0
+# cloudinary==1.43.0
+# fastapi==0.115.11
+# ggwave==0.4.2
+# matplotlib==3.9.4
+# numpy==2.2.4
+# pydantic==2.10.6
+# Requests==2.32.3
+# azure-ai-textanalytics==5.3.0
+# azure-ai-translation-text==1.0.1
+# azure-core==1.32.0
+# PyWavelets==1.6.0
+
+
+
+cloudinary
+fastapi
+ggwave
+matplotlib
+numpy
+pydantic
+Requests
+azure-ai-textanalytics
+azure-ai-translation-text
+azure-core
+PyWavelets
+dotenv
+uvicorn
