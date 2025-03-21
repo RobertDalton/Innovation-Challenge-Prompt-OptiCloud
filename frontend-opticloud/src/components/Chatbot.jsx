@@ -131,15 +131,16 @@ const Chatbot = ({ isSpeechMode }) => {
       setSecurityData(securityResult);
 
       if (!securityResult.safe) {
-        setMessages((prev) => [
-          ...prev,
-          {
+        setMessages((prev) => {
+          const updatedMessages = [...prev];
+          updatedMessages[updatedMessages.length - 1] = {
             text: "Security check detected potential issues. Cannot proceed.",
             sender: "bot",
             securityData: securityResult,
             error: true,
-          },
-        ]);
+          };
+          return updatedMessages;
+        });
         return;
       }
 
