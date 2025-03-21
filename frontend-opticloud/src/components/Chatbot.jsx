@@ -55,6 +55,16 @@ const Chatbot = ({ isSpeechMode }) => {
 
   const fetchStreamingData = async (message) => {
     try {
+      setMessages((prev) => {
+        const updatedMessages = [...prev];
+        updatedMessages[updatedMessages.length - 1] = {
+          text: "Loading Prompt...",
+          sender: "bot",
+          isTyping: true,
+        };
+        return updatedMessages;
+      });
+
       // 3. Make the request to the streaming API.
       const response = await fetch(
         "https://opticloud-http-streaming.azurewebsites.net/generate-text",
@@ -94,15 +104,36 @@ const Chatbot = ({ isSpeechMode }) => {
         result += value;
       }
 
-      // Update the messages in real-time
-      setMessages((prev) => [
-        ...prev,
-        {
-          text: result,
+      setMessages((prev) => {
+        const updatedMessages = [...prev];
+        updatedMessages[updatedMessages.length - 1] = {
+          text: "Prompt Loaded",
           sender: "bot",
           isTyping: true,
-        },
-      ]);
+        };
+        return updatedMessages;
+      });
+
+      // Update the messages in real-time
+
+      setMessages((prev) => {
+        const updatedMessages = [...prev];
+        updatedMessages[updatedMessages.length - 1] = {
+          text: result,
+          sender: "bot",
+          isTyping: false,
+        };
+        return updatedMessages;
+      });
+
+      // setMessages((prev) => [
+      //   ...prev,
+      //   {
+      //     text: result,
+      //     sender: "bot",
+      //     isTyping: false,
+      //   },
+      // ]);
     } catch (error) {
       console.error("Error during streaming API request:", error);
       setMessages((prev) => [
@@ -144,8 +175,6 @@ const Chatbot = ({ isSpeechMode }) => {
         return;
       }
 
-      fetchStreamingData(message);
-
       setMessages((prev) => {
         const filtered = prev.filter((m) => !m.isTyping);
         return [
@@ -159,6 +188,7 @@ const Chatbot = ({ isSpeechMode }) => {
           },
         ];
       });
+      fetchStreamingData(message);
     } catch (error) {
       console.error("Security pipeline failed:", error);
       setMessages((prev) => {
