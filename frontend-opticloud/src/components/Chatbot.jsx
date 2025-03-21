@@ -24,32 +24,49 @@ const Chatbot = ({ isSpeechMode }) => {
       // First play audio
       await handleAudioTransmission(message);
 
+      setMessages((prev) => [
+        ...prev,
+        {
+          text: "Analyzing with spectral shield...",
+          sender: "bot",
+          isTyping: true,
+        },
+      ]);
+
       // Then analyze with spectral shield
       const spectralResult = await spectralShieldService.analyzeText(message);
       setSpectralData(spectralResult);
 
       // Add bot response based on spectral analysis
-      setMessages((prev) => [
-        ...prev,
-        {
-          text:
-            spectralResult.safe > 0.5
-              ? "Signal transmitted successfully"
-              : "Signal transmission detected potential issues",
-          sender: "bot",
-          spectralData: spectralResult,
-        },
-      ]);
+
+      setMessages((prev) => {
+        const filtered = prev.filter((m) => !m.isTyping);
+        return [
+          ...filtered,
+          {
+            text:
+              spectralResult.decision == "safe"
+                ? "Spectral shield process completed successfully"
+                : "Spectral shield process detected potential issues",
+            sender: "bot",
+            spectralData: spectralResult,
+          },
+        ];
+      });
+      fetchStreamingData(message);
     } catch (error) {
       console.error("Spectral mode failed:", error);
-      setMessages((prev) => [
-        ...prev,
-        {
-          text: "Failed to process spectral analysis. Please try again.",
-          sender: "bot",
-          error: true,
-        },
-      ]);
+      setMessages((prev) => {
+        const filtered = prev.filter((m) => !m.isTyping);
+        return [
+          ...filtered,
+          {
+            text: "Failed to process spectral analysis. Please try again.",
+            sender: "bot",
+            error: true,
+          },
+        ];
+      });
     }
   };
 
