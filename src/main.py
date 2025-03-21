@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from src.routes.content_safety_routes import router as content_safety_router
 from src.routes.prompt_shield_routes import router as prompt_shield_router
 from src.routes.language_detection_routes import router as language_detection_router
@@ -13,6 +14,15 @@ app = FastAPI(
     title="Content Safety API",
     description="API to analyze and shield text using Azure Content Safety",
     version="1.0"
+)
+
+# Configuración de CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Permitir todos los orígenes (cambiar en producción)
+    allow_credentials=True,
+    allow_methods=["*"],  # Permitir todos los métodos (GET, POST, etc.)
+    allow_headers=["*"],  # Permitir todos los headers
 )
 
 # Include routes

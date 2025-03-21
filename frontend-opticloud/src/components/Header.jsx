@@ -3,6 +3,8 @@ import { useState, useEffect, useRef } from "react";
 const Header = ({ setColorMode, currentMode, onSpeechModeChange }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSpeechMode, setIsSpeechMode] = useState(false);
+  const [getResponse, setGetResponse] = useState(''); // Estado para la respuesta del GET
+  const [isFetching, setIsFetching] = useState(false); // Nuevo estado
   const menuRef = useRef();
 
   useEffect(() => {
@@ -26,6 +28,24 @@ const Header = ({ setColorMode, currentMode, onSpeechModeChange }) => {
     onSpeechModeChange(!isSpeechMode);
   };
 
+  const handleGetRequest = async () => {
+    if (isFetching) return;
+
+    setIsFetching(true);
+    try {
+      const response = await fetch(
+        "http://127.0.0.1:8000/api/speech/speech-translate"
+      );
+      const data = await response.json();
+      setGetResponse(JSON.stringify(data, null, 2));
+    } catch (error) {
+      console.error("Error en la petición GET:", error);
+      setGetResponse("Error al obtener los datos.");
+    } finally {
+      setIsFetching(false);
+    }
+  };
+
   return (
     <header
       style={{
@@ -45,7 +65,7 @@ const Header = ({ setColorMode, currentMode, onSpeechModeChange }) => {
         <div className="flex items-center gap-3">
           {/* Speech Mode Button */}
           <button
-            onClick={toggleSpeechMode}
+            onClick={() => { toggleSpeechMode(); handleGetRequest(); }}
             style={{
               backgroundColor: isSpeechMode
                 ? "var(--color-primary)"
