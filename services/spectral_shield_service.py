@@ -19,7 +19,7 @@ import ggwave
 from azure.ai.translation.text import TextTranslationClient
 from azure.ai.textanalytics import TextAnalyticsClient
 from azure.core.credentials import AzureKeyCredential
-#from dotenv import load_dotenv just local run
+from dotenv import load_dotenv
 
 class SpectralShieldService:
     """
@@ -37,7 +37,7 @@ class SpectralShieldService:
     """
     def __init__(self):
         
-        #load_dotenv() just local run
+        load_dotenv()
         self.translator_key = os.getenv("TRANSLATOR_KEY")
         self.translator_endpoint = os.getenv("TRANSLATOR_ENDPOINT")
         self.multiservice_endpoint = os.getenv("MULTISERVICE_ENDPOINT")
