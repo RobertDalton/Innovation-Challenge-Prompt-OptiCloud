@@ -24,7 +24,7 @@ const SecurityPipelineComponent = ({
         bg-gray-800 text-white
       `}
     >
-      <h3 className="text-lg font-semibold p-4">Security Pipeline Mode</h3>
+      <h3 className="text-lg font-semibold p-4 text-center">Security Pipeline Mode</h3>
       {/* Security Stats - Only show when Security Pipeline mode is active */}
       {isSecurityPipelineMode && securityData && (
         <div className="px-4 pt-4 mb-4 flex-shrink-0">
@@ -34,7 +34,7 @@ const SecurityPipelineComponent = ({
 
       {/* Giberlink Visualizer */}
       <div className="flex-1 overflow-hidden">
-        <GiberlinkVisualizer messages={messages} isPlaying={isPlaying} />
+        {/* <GiberlinkVisualizer messages={messages} isPlaying={isPlaying} /> */}
       </div>
     </div>
   );

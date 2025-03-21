@@ -30,6 +30,114 @@ const Chatbot = ({ isSpeechMode }) => {
     return spectralResult;
   };
 
+  const handleSpectralMode = async (message) => {
+    try {
+      // First play audio
+      await handleAudioTransmission(message);
+
+      // Then analyze with spectral shield
+      const spectralResult = await spectralShieldService.analyzeText(message);
+      setSpectralData(spectralResult);
+
+      // Add bot response based on spectral analysis
+      setMessages((prev) => [
+        ...prev,
+        {
+          text:
+            spectralResult.safe > 0.5
+              ? "Signal transmitted successfully"
+              : "Signal transmission detected potential issues",
+          sender: "bot",
+          spectralData: spectralResult,
+        },
+      ]);
+    } catch (error) {
+      console.error("Spectral mode failed:", error);
+      setMessages((prev) => [
+        ...prev,
+        {
+          text: "Failed to process spectral analysis. Please try again.",
+          sender: "bot",
+          error: true,
+        },
+      ]);
+    }
+  };
+
+  const handleSecurityPipeline = async (message) => {
+    try {
+      setMessages((prev) => [
+        ...prev,
+        {
+          text: "Analyzing security...",
+          sender: "bot",
+          isTyping: true,
+        },
+      ]);
+
+      const securityResult = await textSecurityService.analyzeText(message);
+      console.log(securityResult);
+      
+      setSecurityData(securityResult);
+
+      setMessages((prev) => {
+        const filtered = prev.filter((m) => !m.isTyping);
+        return [
+          ...filtered,
+          {
+            text: securityResult.safe
+              ? "Content analysis completed successfully"
+              : "Security check detected potential issues",
+            sender: "bot",
+            securityData: securityResult,
+          },
+        ];
+      });
+    } catch (error) {
+      console.error("Security pipeline failed:", error);
+      setMessages((prev) => {
+        const filtered = prev.filter((m) => !m.isTyping);
+        return [
+          ...filtered,
+          {
+            text: "Failed to complete security analysis. Please try again.",
+            sender: "bot",
+            error: true,
+          },
+        ];
+      });
+    }
+  };
+
+  const handleAudioTransmission = async (message) => {
+    try {
+      setIsPlaying(true);
+      const { durationMs, promise } = await audioService.sendAudio(message);
+
+      // setMessages((prev) => [
+      //   ...prev,
+      //   {
+      //     text: "Converting signal patterns... Transmitting via audio frequencies",
+      //     sender: "bot",
+      //   },
+      // ]);
+
+      // Wait for audio to complete playing
+      await promise;
+      setIsPlaying(false);
+    } catch (error) {
+      console.error("Audio transmission failed:", error);
+      setIsPlaying(false);
+      setMessages((prev) => [
+        ...prev,
+        {
+          text: "Failed to transmit audio signal. Please try again.",
+          sender: "bot",
+        },
+      ]);
+    }
+  };
+
   const handleSendMessage = async (e, message) => {
     e.preventDefault();
     const msg = message || inputMessage;
@@ -38,94 +146,10 @@ const Chatbot = ({ isSpeechMode }) => {
     setMessages([...messages, { text: msg, sender: "user" }]);
 
     if (isGiberlinkMode) {
-      try {
-        setIsPlaying(true);
-        const { durationMs, promise } = await audioService.sendAudio(msg);
-
-        setMessages((prev) => [
-          ...prev,
-          {
-            text: "Converting signal patterns... Transmitting via audio frequencies",
-            sender: "bot",
-          },
-        ]);
-
-        // Wait for audio to complete playing
-        await promise;
-        setIsPlaying(false);
-      } catch (error) {
-        console.error("Audio transmission failed:", error);
-        setIsPlaying(false);
-        setMessages((prev) => [
-          ...prev,
-          {
-            text: "Failed to transmit audio signal. Please try again.",
-            sender: "bot",
-          },
-        ]);
-      }
-    } else {
-      try {
-        setMessages((prev) => [
-          ...prev,
-          {
-            text: "Thinking...",
-            sender: "bot",
-            isTyping: true,
-          },
-        ]);
-
-        const isSecure = await checkTextSecurity(msg);
-
-        if (isSecure) {
-          await analyzeSpectralData(msg);
-
-          const modelResponse = await fineTunedModelService.generateResponse(
-            msg
-          );
-
-          setMessages((prev) => {
-            const filtered = prev.filter((m) => !m.isTyping);
-            return [
-              ...filtered,
-              {
-                text: fineTunedModelService.isHighQualityResponse(modelResponse)
-                  ? modelResponse.response
-                  : "I apologize, but I'm not confident about providing an answer to that.",
-                sender: "bot",
-                confidence: modelResponse.confidence,
-              },
-            ];
-          });
-        } else {
-          setMessages((prev) => {
-            const filtered = prev.filter((m) => !m.isTyping);
-            return [
-              ...filtered,
-              {
-                text: "I apologize, but I cannot process potentially unsafe content.",
-                sender: "bot",
-                error: true,
-              },
-            ];
-          });
-        }
-      } catch (error) {
-        console.error("Model response failed:", error);
-        setMessages((prev) => {
-          const filtered = prev.filter((m) => !m.isTyping);
-          return [
-            ...filtered,
-            {
-              text: "I apologize, but I'm having trouble processing your request right now.",
-              sender: "bot",
-              error: true,
-            },
-          ];
-        });
-      }
+      await handleSpectralMode(msg);
+    } else if (isSecurityPipelineMode) {
+      await handleSecurityPipeline(msg);
     }
-
     setInputMessage("");
   };
 

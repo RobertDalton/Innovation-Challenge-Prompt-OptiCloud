@@ -24,7 +24,7 @@ const SpectralModeComponent = ({
         bg-gray-800 text-white
       `}
     >
-       <h3 className="text-lg font-semibold p-4">Spectral Shield Mode</h3>
+       <h3 className="text-lg font-semibold p-4 text-center">Spectral Shield Mode</h3>
       {/* Spectral Stats - Only show when Giberlink mode is active */}
       {isGiberlinkMode && spectralData && (
         <div className="px-4 pt-4 mb-4 flex-shrink-0">
