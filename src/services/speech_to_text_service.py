@@ -95,7 +95,7 @@ class SpeechService:
                         text = await self.traslation_service.translate_text_target("Would you like the prompt to be repeated? Please answer repeat or stop.",self.source_language[:2])
                         self.speech_synthesizer.speak_text_async(text).get()
                         answer = translator.recognize_once_async().get()
-                        translation = answer.translations[target_language]
+                        translation = answer.translations.get("en","Stop.")
                         response = translation
                         if(response != "Stop."):
                             response = "Repeat."
@@ -103,7 +103,7 @@ class SpeechService:
                             text = await self.traslation_service.translate_text_target("Would you like to introduce other prompt? Please answer repeat or stop.",self.source_language[:2])
                             self.speech_synthesizer.speak_text_async(text).get()
                             answer = translator.recognize_once_async().get()
-                            translation = answer.translations[target_language]
+                            translation = answer.translations.get("en","Stop.")
                             switch = translation
                             if(switch != "Stop."):
                                 switch = "Repeat."
