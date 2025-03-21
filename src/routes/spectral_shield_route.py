@@ -1,6 +1,6 @@
 from fastapi import APIRouter
-from controllers.spectral_shield_controller import SpectralShieldController
-from models.spectral_shield_model import SpectralShieldRequest,SpectralShieldResponse
+from src.controllers.spectral_shield_controller import SpectralShieldController
+from src.models.spectral_shield_model import SpectralShieldRequest,SpectralShieldResponse
 
 router = APIRouter()
 controller = SpectralShieldController()

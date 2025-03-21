@@ -7,7 +7,7 @@ from src.routes.translation_routes import router as translation_router
 from src.routes.text_security_routes import router as text_security_router
 from src.routes.pii_recognition_routes import router as pii_recognition_router
 from src.routes.text_cleaner_routes import router as text_cleaner_router
-from routes.spectral_shield_route import router as spectral_shield_router
+from src.routes.spectral_shield_route import router as spectral_shield_router
 from src.routes.speech_to_text_routes import router as speech_router
 from src.routes.response_fine_tuning_routes import router as response_fine_tuning_router
 from fastapi.middleware.cors import CORSMiddleware

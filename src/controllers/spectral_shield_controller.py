@@ -1,5 +1,5 @@
 from fastapi import HTTPException
-from services.spectral_shield_service import SpectralShieldService
+from src.services.spectral_shield_service import SpectralShieldService
 
 class SpectralShieldController:
     def __init__(self):
