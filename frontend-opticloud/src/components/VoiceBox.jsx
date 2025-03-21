@@ -89,7 +89,7 @@ const VoiceBox = ({ onVoiceResult, isActive }) => {
             </p>
             {error && (
                 <p style={{ color: 'var(--color-primary)' }} className="text-xs text-center">
-                    {error}
+                    {""}
                 </p>
             )}
         </div>
