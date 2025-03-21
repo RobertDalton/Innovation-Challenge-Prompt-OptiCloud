@@ -5,6 +5,7 @@ import VoiceBox from "./VoiceBox";
 import audioService from "../services/audioService";
 import fineTunedModelService from "../services/fineTunedModelService";
 import textSecurityService from "../services/textSecurityService";
+import spectralShieldService from "../services/spectralShieldService";
 import "../styles/colors.css";
 import SpectralModeComponent from "./SpectralModeComponent";
 import SecurityPipelineComponent from "./SecurityPipelineComponent";

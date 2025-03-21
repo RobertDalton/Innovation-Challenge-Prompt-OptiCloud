@@ -1,11 +1,11 @@
 class SpectralShieldService {
     constructor() {
-        this.baseUrl = 'your-spectral-shield-endpoint';
+        this.baseUrl = import.meta.env.VITE_SPECTRAL_SHIELD;
     }
 
     async analyzeText(text) {
         try {
-            const response = await fetch(`${this.baseUrl}/spectral-shield`, {
+            const response = await fetch(`${this.baseUrl}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

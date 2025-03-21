@@ -1,6 +1,6 @@
 class FineTunedModelService {
     constructor() {
-        this.baseUrl = import.meta.env.VITE_FINE_TUNED_MODEL || 'http://localhost:8000';
+        this.baseUrl = import.meta.env.VITE_FINE_TUNED_MODEL;
     }
 
     async generateResponse(text) {

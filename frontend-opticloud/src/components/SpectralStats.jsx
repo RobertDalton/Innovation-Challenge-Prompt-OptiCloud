@@ -14,14 +14,11 @@ const SpectralStats = ({ spectralData }) => {
 
       <div className="space-y-1">
         <div className="flex justify-between">
-          <span style={{ color: "var(--color-primaryText)" }}>
-            Safe Score:
-          </span>
+          <span style={{ color: "var(--color-primaryText)" }}>Safe Score:</span>
           <span
             style={{
-              color: spectralData.safe > 0.5
-                ? "var(--color-primary)"
-                : "#ff4444",
+              color:
+                spectralData.safe > 0.5 ? "var(--color-primary)" : "#ff4444",
             }}
             className="font-medium"
           >
@@ -40,6 +37,31 @@ const SpectralStats = ({ spectralData }) => {
           </span>
         </div>
       </div>
+
+      {/* Spectrogram Image */}
+      {
+        console.log(spectralData)
+        // console.log(spectralData.spectogram_url)
+        
+      }
+      {spectralData.spectogramUrl && (
+        <div className="mt-4">
+          <h4
+            style={{ color: "var(--color-primaryText)" }}
+            className="text-sm font-medium mb-2"
+          >
+            Spectrogram
+          </h4>
+          <div className="rounded-lg overflow-hidden border border-element">
+            <img
+              src={spectralData.spectogramUrl}
+              alt="Signal Spectrogram"
+              className="w-full h-auto object-cover"
+              loading="lazy"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
