@@ -19,9 +19,7 @@ import ggwave
 from azure.ai.translation.text import TextTranslationClient
 from azure.ai.textanalytics import TextAnalyticsClient
 from azure.core.credentials import AzureKeyCredential
-
-from config import model_settings
-
+#from dotenv import load_dotenv just local run
 
 class SpectralShieldService:
     """
@@ -38,9 +36,22 @@ class SpectralShieldService:
         __init__: Initializes the SpectralShieldService class, sets the prediction headers, and initializes external service clients.
     """
     def __init__(self):
+        
+        #load_dotenv() just local run
+        self.translator_key = os.getenv("TRANSLATOR_KEY")
+        self.translator_endpoint = os.getenv("TRANSLATOR_ENDPOINT")
+        self.multiservice_endpoint = os.getenv("MULTISERVICE_ENDPOINT")
+        self.multiservice_key = os.getenv("MULTISERVICE_KEY")
+        
+        self.spectral_shield_prediction_url = os.getenv("SPECTRAL_SHIELD_PREDICTION_URL")
+        self.spectral_shield_prediction_key = os.getenv("SPECTRAL_SHIELD_PREDICTION_KEY")
+        
+        self.cloudinary_api_key = os.getenv("CLOUDINARY_API_KEY")
+        self.cloudinary_api_secret = os.getenv("CLOUDINARY_API_SECRET")
+        self.cloud_name = os.getenv("CLOUD_NAME")
 
         self.headers = {
-            "Prediction-Key": f"{model_settings.spectral_shield_prediction_key}",
+            "Prediction-Key": f"{self.spectral_shield_prediction_key}",
             "Content-Type": "application/octet-stream"
         }
 
@@ -62,9 +73,9 @@ class SpectralShieldService:
         """
         try:
             cloudinary.config(
-                cloud_name=model_settings.cloud_name, 
-                api_key=model_settings.cloudinary_api_key, 
-                api_secret=model_settings.cloudinary_api_secret
+                cloud_name=self.cloud_name, 
+                api_key=self.cloudinary_api_key, 
+                api_secret=self.cloudinary_api_secret
             )
             # Detect and translate the text
             text = self.language_detect_and_translate(self.translator_client, self.text_analytics_client, text)
@@ -76,7 +87,7 @@ class SpectralShieldService:
             # Generate spectrogram and send for prediction
             spectogram = self.generate_spectogram(coef, max_seconds)
             prediction = self.send_to_prediction_service(
-                model_settings.spectral_shield_prediction_url, self.headers, spectogram
+                self.spectral_shield_prediction_url, self.headers, spectogram
             )
             toxicity_score = prediction['toxic']
             #Model accuracy for toxicity is between 60%-75%
@@ -98,11 +109,11 @@ class SpectralShieldService:
         Initialize Azure clients for translation and text analytics.
         """
         translator_client = TextTranslationClient(
-            credential=AzureKeyCredential(model_settings.translator_key), region='eastus'
+            credential=AzureKeyCredential(self.translator_key), region='eastus'
         )
         text_analytics_client = TextAnalyticsClient(
-            endpoint=model_settings.multiservice_endpoint, 
-            credential=AzureKeyCredential(model_settings.multiservice_key)
+            endpoint=self.multiservice_endpoint, 
+            credential=AzureKeyCredential(self.multiservice_key)
         )
         return translator_client, text_analytics_client
 
