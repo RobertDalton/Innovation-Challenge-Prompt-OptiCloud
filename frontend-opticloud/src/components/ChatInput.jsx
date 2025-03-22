@@ -66,7 +66,7 @@ const ChatInput = ({
         <form onSubmit={onSendMessage}>
           <div className="flex gap-3 items-center">
             {/* Mode toggle buttons */}
-            <button
+            {/* <button
               type="button"
               onClick={toggleVoiceMode}
               style={{
@@ -79,7 +79,7 @@ const ChatInput = ({
               title="Voice Mode"
             >
               Voice Mode
-            </button>
+            </button> */}
 
             <button
               type="button"
