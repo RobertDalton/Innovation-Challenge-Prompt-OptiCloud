@@ -14,7 +14,9 @@ How could a prompt pre-processing layer be implemented that would identify and c
 
 ![alt text](./data/inclusiveness.png)
 
-![alt text](./data/opti-6.png)
+![alt text](./data/demo_image.png)
+
+![alt text](./data/new_diagram.png)
 
 Slides: 
 
@@ -22,11 +24,9 @@ https://docs.google.com/presentation/d/1Kc8YplbuSZ13aiKOSBfQNZymO-lbdoxgBjnx87-d
 
 ## Demo 
 
-<video src="./data/opti_cloud.mp4" width="320" height="240" controls></video>
-
 Full demos is available here: 
 
-https://www.youtube.com/watch?v=SmXP05fLER4
+https://youtu.be/ZFtPCYbdn-c
 
 ## Project Installation: 
 
